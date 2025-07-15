@@ -1,0 +1,790 @@
+<!-- templates/pos/index.html - POS Main Interface -->
+{% extends "base.html" %}
+
+{% block title %}ระบบขาย POS{% endblock %}
+
+{% block head_extra %}
+<style>
+    .pos-container { height: calc(100vh - 120px); overflow: hidden; }
+    .product-grid { height: 60vh; overflow-y: auto; }
+    .cart-area { height: 60vh; border: 1px solid #dee2e6; border-radius: 0.375rem; }
+    .cart-items { height: 40vh; overflow-y: auto; }
+    .cart-summary { background-color: #f8f9fa; padding: 1rem; }
+    .product-card { cursor: pointer; transition: all 0.2s; }
+    .product-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .product-card.out-of-stock { opacity: 0.6; cursor: not-allowed; }
+    .barcode-scanner { position: sticky; top: 0; background: white; z-index: 10; }
+    .cart-item { border-bottom: 1px solid #eee; padding: 0.5rem 0; }
+    .cart-item:last-child { border-bottom: none; }
+    .payment-methods .btn { margin: 0.25rem; }
+    .calculator-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+    .calculator-grid .btn { aspect-ratio: 1; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pos-container">
+    <div class="row h-100">
+        <!-- Left Side - Products -->
+        <div class="col-lg-7">
+            <div class="card h-100">
+                <div class="card-header barcode-scanner">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-barcode"></i></span>
+                                <input type="text" class="form-control" id="barcodeInput" placeholder="สแกนบาร์โค้ดหรือค้นหาสินค้า" autofocus>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="categoryFilter">
+                                <option value="">ทุกหมวดหมู่</option>
+                                <option value="อุปกรณ์เสริม">อุปกรณ์เสริม</option>
+                                <option value="อะไหล่">อะไหล่</option>
+                                <option value="บริการ">บริการ</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-outline-primary w-100" onclick="refreshProducts()">
+                                <i class="fas fa-sync-alt"></i> รีเฟรช
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-2">
+                    <div class="product-grid" id="productGrid">
+                        <!-- Products will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Cart & Payment -->
+        <div class="col-lg-5">
+            <div class="cart-area d-flex flex-column">
+                <!-- Customer Selection -->
+                <div class="p-3 border-bottom">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <input type="text" class="form-control" id="customerSearch" placeholder="ค้นหาลูกค้า (ไม่บังคับ)">
+                        <button class="btn btn-outline-secondary" type="button" id="newCustomerBtn">
+                            <i class="fas fa-user-plus"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted">เลือกลูกค้าเพื่อสะสมแต้มและประวัติการซื้อ</small>
+                </div>
+
+                <!-- Cart Items -->
+                <div class="cart-items flex-grow-1 p-3">
+                    <h6 class="mb-3">รายการสินค้า</h6>
+                    <div id="cartItemsList">
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                            <p>ยังไม่มีสินค้าในตะกร้า</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cart Summary & Payment -->
+                <div class="cart-summary border-top">
+                    <div class="row mb-2">
+                        <div class="col-6">ยอดรวม:</div>
+                        <div class="col-6 text-end" id="subtotalDisplay">฿0.00</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-6">ส่วนลด:</div>
+                        <div class="col-6 text-end">
+                            <input type="number" class="form-control form-control-sm text-end" id="discountInput" value="0" min="0" style="width: 80px; display: inline-block;">
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-6">ภาษี ({{ tax_rate }}%):</div>
+                        <div class="col-6 text-end" id="taxDisplay">฿0.00</div>
+                    </div>
+                    <div class="row mb-3 fw-bold">
+                        <div class="col-6">รวมทั้งสิ้น:</div>
+                        <div class="col-6 text-end text-primary fs-5" id="totalDisplay">฿0.00</div>
+                    </div>
+
+                    <!-- Payment Methods -->
+                    <div class="payment-methods mb-3">
+                        <label class="form-label fw-bold">วิธีการชำระเงิน:</label>
+                        <div>
+                            <input type="radio" class="btn-check" name="paymentMethod" id="cash" value="cash" checked>
+                            <label class="btn btn-outline-success" for="cash">
+                                <i class="fas fa-money-bill-wave"></i> เงินสด
+                            </label>
+
+                            <input type="radio" class="btn-check" name="paymentMethod" id="card" value="card">
+                            <label class="btn btn-outline-info" for="card">
+                                <i class="fas fa-credit-card"></i> บัตร
+                            </label>
+
+                            <input type="radio" class="btn-check" name="paymentMethod" id="transfer" value="transfer">
+                            <label class="btn btn-outline-warning" for="transfer">
+                                <i class="fas fa-mobile-alt"></i> โอน
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Cash Payment Details -->
+                    <div id="cashPaymentDetails">
+                        <div class="row mb-2">
+                            <div class="col-6">
+                                <label class="form-label">รับเงิน:</label>
+                                <input type="number" class="form-control" id="cashReceived" placeholder="0.00" min="0" step="0.01">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">เงินทอน:</label>
+                                <input type="text" class="form-control" id="changeAmount" readonly>
+                            </div>
+                        </div>
+                        <!-- Quick Cash Buttons -->
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setCashAmount(100)">100</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setCashAmount(500)">500</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setCashAmount(1000)">1000</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setExactAmount()">พอดี</button>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success btn-lg" id="processPaymentBtn" onclick="processPayment()" disabled>
+                            <i class="fas fa-cash-register"></i> ชำระเงิน
+                        </button>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <button class="btn btn-warning w-100" onclick="holdSale()">
+                                    <i class="fas fa-pause"></i> พักการขาย
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-secondary w-100" onclick="clearCart()">
+                                    <i class="fas fa-trash"></i> ล้างตะกร้า
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Receipt Modal -->
+<div class="modal fade" id="receiptModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ใบเสร็จรับเงิน</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="receiptContent">
+                <!-- Receipt content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="printReceipt()">
+                    <i class="fas fa-print"></i> พิมพ์
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                <button type="button" class="btn btn-success" onclick="newSale()">
+                    <i class="fas fa-plus"></i> ขายใหม่
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Modal -->
+<div class="modal fade" id="customerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">เพิ่มลูกค้าใหม่</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="customerForm">
+                    <div class="mb-3">
+                        <label class="form-label">ชื่อ-นามสกุล *</label>
+                        <input type="text" class="form-control" id="customerName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">เบอร์โทร</label>
+                        <input type="tel" class="form-control" id="customerPhone">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">อีเมล</label>
+                        <input type="email" class="form-control" id="customerEmail">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">หน่วยงาน/บริษัท</label>
+                        <input type="text" class="form-control" id="customerOrganization">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-primary" onclick="saveCustomer()">บันทึก</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block body_extra %}
+<script>
+// POS System JavaScript
+let cart = [];
+let selectedCustomer = null;
+let products = [];
+const TAX_RATE = {{ tax_rate }} / 100;
+
+// Initialize POS
+document.addEventListener('DOMContentLoaded', function() {
+    loadProducts();
+    setupEventListeners();
+    updateCartDisplay();
+});
+
+function setupEventListeners() {
+    // Barcode scanner input
+    document.getElementById('barcodeInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchProduct(this.value);
+            this.value = '';
+        }
+    });
+
+    // Category filter
+    document.getElementById('categoryFilter').addEventListener('change', function() {
+        filterProducts(this.value);
+    });
+
+    // Payment method change
+    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            togglePaymentDetails(this.value);
+        });
+    });
+
+    // Cash received input
+    document.getElementById('cashReceived').addEventListener('input', calculateChange);
+    
+    // Discount input
+    document.getElementById('discountInput').addEventListener('input', updateCartDisplay);
+
+    // Customer search
+    $('#customerSearch').on('input', debounce(searchCustomers, 300));
+    
+    // New customer button
+    document.getElementById('newCustomerBtn').addEventListener('click', function() {
+        new bootstrap.Modal(document.getElementById('customerModal')).show();
+    });
+}
+
+async function loadProducts() {
+    try {
+        const response = await fetch('/pos/api/products');
+        products = await response.json();
+        displayProducts(products);
+    } catch (error) {
+        console.error('Error loading products:', error);
+        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลสินค้าได้', 'error');
+    }
+}
+
+function displayProducts(productsToShow) {
+    const grid = document.getElementById('productGrid');
+    grid.innerHTML = '';
+
+    productsToShow.forEach(product => {
+        const isOutOfStock = product.stock <= 0 && !product.is_service;
+        const card = document.createElement('div');
+        card.className = `col-md-4 col-lg-3 mb-3`;
+        card.innerHTML = `
+            <div class="card product-card h-100 ${isOutOfStock ? 'out-of-stock' : ''}" 
+                 onclick="${isOutOfStock ? '' : `addToCart(${product.id})`}">
+                <div class="card-body p-2">
+                    <h6 class="card-title small">${product.name}</h6>
+                    <p class="text-muted small mb-1">${product.category || ''}</p>
+                    <p class="text-primary fw-bold mb-1">฿${formatCurrency(product.price)}</p>
+                    ${product.is_service ? 
+                        '<small class="badge bg-info">บริการ</small>' : 
+                        `<small class="text-muted">คงเหลือ: ${product.stock}</small>`
+                    }
+                    ${isOutOfStock ? '<small class="badge bg-danger">หมดสต็อก</small>' : ''}
+                </div>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function filterProducts(category) {
+    const filtered = category ? products.filter(p => p.category === category) : products;
+    displayProducts(filtered);
+}
+
+async function searchProduct(query) {
+    if (!query.trim()) return;
+
+    // Try barcode search first
+    try {
+        const response = await fetch(`/pos/api/barcode/${encodeURIComponent(query)}`);
+        if (response.ok) {
+            const product = await response.json();
+            addToCart(product.id);
+            return;
+        }
+    } catch (error) {
+        console.error('Barcode search error:', error);
+    }
+
+    // Fallback to name search
+    const found = products.filter(p => 
+        p.name.toLowerCase().includes(query.toLowerCase()) ||
+        p.barcode === query
+    );
+
+    if (found.length === 1) {
+        addToCart(found[0].id);
+    } else if (found.length > 1) {
+        displayProducts(found);
+    } else {
+        Swal.fire('ไม่พบสินค้า', `ไม่พบสินค้าที่ค้นหา: ${query}`, 'info');
+    }
+}
+
+function addToCart(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    if (!product.is_service && product.stock <= 0) {
+        Swal.fire('สินค้าหมด', 'สินค้านี้หมดสต็อกแล้ว', 'warning');
+        return;
+    }
+
+    const existingItem = cart.find(item => item.product_id === productId);
+    
+    if (existingItem) {
+        if (!product.is_service && existingItem.quantity >= product.stock) {
+            Swal.fire('สต็อกไม่เพียงพอ', 'ไม่สามารถเพิ่มสินค้าได้เนื่องจากสต็อกไม่เพียงพอ', 'warning');
+            return;
+        }
+        existingItem.quantity++;
+        existingItem.total_price = existingItem.quantity * existingItem.unit_price;
+    } else {
+        cart.push({
+            product_id: productId,
+            name: product.name,
+            unit_price: product.price,
+            quantity: 1,
+            total_price: product.price
+        });
+    }
+
+    updateCartDisplay();
+    playAddSound();
+}
+
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    updateCartDisplay();
+}
+
+function updateQuantity(index, newQuantity) {
+    if (newQuantity <= 0) {
+        removeFromCart(index);
+        return;
+    }
+
+    const item = cart[index];
+    const product = products.find(p => p.id === item.product_id);
+    
+    if (!product.is_service && newQuantity > product.stock) {
+        Swal.fire('สต็อกไม่เพียงพอ', `สินค้านี้มีเพียง ${product.stock} ชิ้น`, 'warning');
+        return;
+    }
+
+    item.quantity = newQuantity;
+    item.total_price = item.quantity * item.unit_price;
+    updateCartDisplay();
+}
+
+function updateCartDisplay() {
+    const cartList = document.getElementById('cartItemsList');
+    
+    if (cart.length === 0) {
+        cartList.innerHTML = `
+            <div class="text-center text-muted py-4">
+                <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                <p>ยังไม่มีสินค้าในตะกร้า</p>
+            </div>
+        `;
+    } else {
+        cartList.innerHTML = cart.map((item, index) => `
+            <div class="cart-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">${item.name}</h6>
+                        <small class="text-muted">฿${formatCurrency(item.unit_price)} × ${item.quantity}</small>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${index}, ${item.quantity - 1})">-</button>
+                        <span class="mx-2">${item.quantity}</span>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${index}, ${item.quantity + 1})">+</button>
+                        <button class="btn btn-sm btn-outline-danger ms-2" onclick="removeFromCart(${index})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="text-end fw-bold">฿${formatCurrency(item.total_price)}</div>
+            </div>
+        `).join('');
+    }
+
+    // Update totals
+    const subtotal = cart.reduce((sum, item) => sum + item.total_price, 0);
+    const discount = parseFloat(document.getElementById('discountInput').value) || 0;
+    const discountedSubtotal = subtotal - discount;
+    const tax = discountedSubtotal * TAX_RATE;
+    const total = discountedSubtotal + tax;
+
+    document.getElementById('subtotalDisplay').textContent = `฿${formatCurrency(subtotal)}`;
+    document.getElementById('taxDisplay').textContent = `฿${formatCurrency(tax)}`;
+    document.getElementById('totalDisplay').textContent = `฿${formatCurrency(total)}`;
+
+    // Enable/disable payment button
+    document.getElementById('processPaymentBtn').disabled = cart.length === 0;
+
+    // Update change calculation
+    calculateChange();
+}
+
+function calculateChange() {
+    const total = parseFloat(document.getElementById('totalDisplay').textContent.replace('฿', '').replace(',', ''));
+    const received = parseFloat(document.getElementById('cashReceived').value) || 0;
+    const change = received - total;
+    
+    document.getElementById('changeAmount').value = change >= 0 ? formatCurrency(change) : '0.00';
+}
+
+function setCashAmount(amount) {
+    document.getElementById('cashReceived').value = amount;
+    calculateChange();
+}
+
+function setExactAmount() {
+    const total = parseFloat(document.getElementById('totalDisplay').textContent.replace('฿', '').replace(',', ''));
+    document.getElementById('cashReceived').value = total.toFixed(2);
+    calculateChange();
+}
+
+function togglePaymentDetails(method) {
+    const cashDetails = document.getElementById('cashPaymentDetails');
+    cashDetails.style.display = method === 'cash' ? 'block' : 'none';
+}
+
+async function processPayment() {
+    if (cart.length === 0) return;
+
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+    const subtotal = cart.reduce((sum, item) => sum + item.total_price, 0);
+    const discount = parseFloat(document.getElementById('discountInput').value) || 0;
+    const discountedSubtotal = subtotal - discount;
+    const tax = discountedSubtotal * TAX_RATE;
+    const total = discountedSubtotal + tax;
+
+    let paymentData = {
+        customer_id: selectedCustomer ? selectedCustomer.id : null,
+        items: cart,
+        subtotal: subtotal,
+        tax_amount: tax,
+        discount_amount: discount,
+        total: total,
+        payment_method: paymentMethod
+    };
+
+    if (paymentMethod === 'cash') {
+        const received = parseFloat(document.getElementById('cashReceived').value) || 0;
+        if (received < total) {
+            Swal.fire('เงินไม่พอ', 'กรุณากรอกจำนวนเงินที่รับให้ถูกต้อง', 'warning');
+            return;
+        }
+        paymentData.payment_received = received;
+        paymentData.change_amount = received - total;
+    }
+
+    try {
+        const response = await fetch('/pos/api/sale', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(paymentData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            // Show receipt
+            await showReceipt(result.sale_id);
+            
+            // Clear cart and reset
+            clearCart();
+            
+            Swal.fire('สำเร็จ', 'บันทึกการขายเรียบร้อยแล้ว', 'success');
+        } else {
+            Swal.fire('ข้อผิดพลาด', result.error || 'เกิดข้อผิดพลาดในการบันทึก', 'error');
+        }
+    } catch (error) {
+        console.error('Payment error:', error);
+        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้', 'error');
+    }
+}
+
+async function showReceipt(saleId) {
+    try {
+        const response = await fetch(`/pos/api/sales/${saleId}`);
+        const sale = await response.json();
+        
+        // Generate receipt HTML
+        const receiptHtml = generateReceiptHtml(sale);
+        document.getElementById('receiptContent').innerHTML = receiptHtml;
+        
+        // Show modal
+        new bootstrap.Modal(document.getElementById('receiptModal')).show();
+    } catch (error) {
+        console.error('Error loading receipt:', error);
+    }
+}
+
+function generateReceiptHtml(sale) {
+    return `
+        <div class="receipt-print">
+            <div class="text-center mb-4">
+                <h4>{{ shop_info.name if shop_info else 'Comphone Service Center' }}</h4>
+                <p class="mb-1">{{ shop_info.address if shop_info else '' }}</p>
+                <p class="mb-1">โทร: {{ shop_info.phone if shop_info else '' }}</p>
+                <hr>
+            </div>
+            
+            <div class="mb-3">
+                <strong>ใบเสร็จเลขที่:</strong> ${sale.receipt_number}<br>
+                <strong>วันที่:</strong> ${new Date(sale.created_at).toLocaleString('th-TH')}<br>
+                <strong>แคชเชียร์:</strong> ${sale.cashier}<br>
+                ${sale.customer ? `<strong>ลูกค้า:</strong> ${sale.customer}<br>` : ''}
+            </div>
+            
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>รายการ</th>
+                        <th class="text-center">จำนวน</th>
+                        <th class="text-end">ราคา</th>
+                        <th class="text-end">รวม</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sale.items.map(item => `
+                        <tr>
+                            <td>${item.product_name}</td>
+                            <td class="text-center">${item.quantity}</td>
+                            <td class="text-end">฿${formatCurrency(item.unit_price)}</td>
+                            <td class="text-end">฿${formatCurrency(item.total_price)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            
+            <div class="text-end">
+                <p>ยอดรวม: ฿${formatCurrency(sale.subtotal)}</p>
+                ${sale.discount_amount > 0 ? `<p>ส่วนลด: -฿${formatCurrency(sale.discount_amount)}</p>` : ''}
+                <p>ภาษี: ฿${formatCurrency(sale.tax_amount)}</p>
+                <h5>รวมทั้งสิ้น: ฿${formatCurrency(sale.total)}</h5>
+                <p>ชำระด้วย: ${getPaymentMethodText(sale.payment_method)}</p>
+            </div>
+            
+            <div class="text-center mt-4">
+                <p>ขอบคุณที่ใช้บริการ</p>
+            </div>
+        </div>
+    `;
+}
+
+function getPaymentMethodText(method) {
+    const methods = {
+        'cash': 'เงินสด',
+        'card': 'บัตรเครดิต/เดบิต',
+        'transfer': 'โอนเงิน'
+    };
+    return methods[method] || method;
+}
+
+function printReceipt() {
+    const printContent = document.getElementById('receiptContent').innerHTML;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>ใบเสร็จ</title>
+            <style>
+                body { font-family: 'Sarabun', sans-serif; font-size: 12px; }
+                .receipt-print { max-width: 300px; margin: 0 auto; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { padding: 2px; border-bottom: 1px dashed #ccc; }
+                .text-center { text-align: center; }
+                .text-end { text-align: right; }
+                @media print { body { margin: 0; } }
+            </style>
+        </head>
+        <body>${printContent}</body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+function newSale() {
+    bootstrap.Modal.getInstance(document.getElementById('receiptModal')).hide();
+    clearCart();
+    document.getElementById('barcodeInput').focus();
+}
+
+function clearCart() {
+    cart = [];
+    selectedCustomer = null;
+    document.getElementById('customerSearch').value = '';
+    document.getElementById('discountInput').value = '0';
+    document.getElementById('cashReceived').value = '';
+    document.getElementById('changeAmount').value = '';
+    updateCartDisplay();
+}
+
+function holdSale() {
+    if (cart.length === 0) return;
+    
+    // Store in localStorage for now (could be enhanced to store in database)
+    const heldSales = JSON.parse(localStorage.getItem('heldSales') || '[]');
+    heldSales.push({
+        id: Date.now(),
+        cart: [...cart],
+        customer: selectedCustomer,
+        timestamp: new Date().toISOString()
+    });
+    localStorage.setItem('heldSales', JSON.stringify(heldSales));
+    
+    clearCart();
+    Swal.fire('บันทึกแล้ว', 'พักการขายเรียบร้อยแล้ว', 'success');
+}
+
+function refreshProducts() {
+    loadProducts();
+    Swal.fire({
+        toast: true,
+        icon: 'success',
+        title: 'รีเฟรชข้อมูลเรียบร้อย',
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 1500
+    });
+}
+
+// Customer functions
+async function searchCustomers() {
+    const query = document.getElementById('customerSearch').value.trim();
+    if (!query) {
+        selectedCustomer = null;
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/customers?search=${encodeURIComponent(query)}`);
+        const customers = await response.json();
+        
+        if (customers.length > 0) {
+            // For now, select first match (could be enhanced with dropdown)
+            selectedCustomer = customers[0];
+            document.getElementById('customerSearch').value = customers[0].name;
+        }
+    } catch (error) {
+        console.error('Customer search error:', error);
+    }
+}
+
+async function saveCustomer() {
+    const formData = {
+        name: document.getElementById('customerName').value,
+        phone: document.getElementById('customerPhone').value,
+        email: document.getElementById('customerEmail').value,
+        organization: document.getElementById('customerOrganization').value
+    };
+
+    if (!formData.name.trim()) {
+        Swal.fire('ข้อผิดพลาด', 'กรุณากรอกชื่อลูกค้า', 'warning');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/customers', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            selectedCustomer = result.customer;
+            document.getElementById('customerSearch').value = result.customer.name;
+            bootstrap.Modal.getInstance(document.getElementById('customerModal')).hide();
+            document.getElementById('customerForm').reset();
+            
+            Swal.fire('สำเร็จ', 'เพิ่มลูกค้าใหม่เรียบร้อย', 'success');
+        } else {
+            Swal.fire('ข้อผิดพลาด', result.error || 'ไม่สามารถเพิ่มลูกค้าได้', 'error');
+        }
+    } catch (error) {
+        console.error('Save customer error:', error);
+        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้', 'error');
+    }
+}
+
+// Utility functions
+function formatCurrency(amount) {
+    return parseFloat(amount).toLocaleString('th-TH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+function playAddSound() {
+    // Optional: Add sound feedback
+    if (typeof Audio !== 'undefined') {
+        try {
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwgBjtl0e/TgzMFl2+z6qJbEgpFmd/ywnEjBZJy0OzjjTEFKmzV7M9tRApPo+H1xm0gBjBl0+7bfTYF...');
+            audio.volume = 0.1;
+            audio.play().catch(() => {}); // Ignore errors
+        } catch (e) {}
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,91 @@
+<!-- ============================================================================ -->
+<!-- templates/main/search_results.html - Search Results Page -->
+<!-- ============================================================================ -->
+{% extends "base.html" %}
+{% block title %}ผลการค้นหา - {{ business_name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">ผลการค้นหา</h1>
+    {% if query %}
+    <span class="text-muted">ค้นหา: "{{ query }}" พบ {{ total }} รายการ</span>
+    {% endif %}
+</div>
+
+{% if query %}
+    {% if total > 0 %}
+        <!-- Search Results -->
+        {% if results.customers %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">ลูกค้า ({{ results.customers|length }} รายการ)</h5>
+            </div>
+            <div class="card-body">
+                {% for customer in results.customers %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <strong>{{ customer.name }}</strong><br>
+                        <small class="text-muted">{{ customer.phone or 'ไม่มีเบอร์โทร' }}</small>
+                    </div>
+                    <span class="badge bg-info">{{ customer.customer_type }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if results.tasks %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">งาน ({{ results.tasks|length }} รายการ)</h5>
+            </div>
+            <div class="card-body">
+                {% for task in results.tasks %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <strong>{{ task.title }}</strong><br>
+                        <small class="text-muted">{{ task.task_number or 'ไม่มีหมายเลข' }}</small>
+                    </div>
+                    <span class="badge bg-primary">งาน</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if results.products %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">สินค้า ({{ results.products|length }} รายการ)</h5>
+            </div>
+            <div class="card-body">
+                {% for product in results.products %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <strong>{{ product.name }}</strong><br>
+                        <small class="text-muted">{{ product.sku or 'ไม่มี SKU' }}</small>
+                    </div>
+                    <span class="badge bg-success">฿{{ product.price }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5>ไม่พบผลการค้นหา</h5>
+                <p class="text-muted">ลองใช้คำค้นหาอื่นหรือตรวจสอบการสะกดคำ</p>
+            </div>
+        </div>
+    {% endif %}
+{% else %}
+    <div class="card">
+        <div class="card-body text-center">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h5>ค้นหาข้อมูล</h5>
+            <p class="text-muted">กรอกคำค้นหาในช่องค้นหาด้านบน</p>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

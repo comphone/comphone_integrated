@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ business_name }}{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #0dcaf0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
+
+        body {
+            font-family: 'Sarabun', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            font-size: 14px;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            margin: 2px 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: white;
+            background-color: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link i {
+            width: 20px;
+            text-align: center;
+            margin-right: 8px;
+        }
+
+        .main-content {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+            margin: 20px;
+            padding: 25px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 25px rgba(0,0,0,0.12);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border: none;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+            border: none;
+        }
+
+        .table {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table thead th {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: none;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .badge {
+            font-size: 0.75em;
+            font-weight: 500;
+            border-radius: 6px;
+            padding: 4px 8px;
+        }
+
+        .alert {
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stats-card .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stats-card .stats-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .loading {
+            display: none;
+        }
+
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                position: fixed;
+                z-index: 1050;
+                width: 250px;
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin: 10px;
+                padding: 15px;
+            }
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .footer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            margin-top: 50px;
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+        <div class="container-fluid">
+            <!-- Mobile Menu Button -->
+            <button class="btn btn-outline-primary d-lg-none me-2" type="button" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <!-- Brand -->
+            <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">
+                <i class="fas fa-mobile-alt me-2"></i>{{ business_name }}
+            </a>
+
+            <!-- Top Right Menu -->
+            <div class="navbar-nav ms-auto d-flex flex-row">
+                {% if current_user.is_authenticated %}
+                    <!-- Quick Search -->
+                    <form class="d-flex me-3" method="GET" action="{{ url_for('main.search') }}">
+                        <input class="form-control form-control-sm" type="search" name="q" placeholder="ค้นหา..." style="width: 200px;">
+                        <button class="btn btn-outline-primary btn-sm ms-1" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+
+                    <!-- Notifications -->
+                    <div class="nav-item dropdown me-2">
+                        <a class="nav-link position-relative" href="#" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notificationCount">0</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end" style="width: 300px;">
+                            <h6 class="dropdown-header">การแจ้งเตือน</h6>
+                            <div id="notificationList">
+                                <div class="dropdown-item text-center text-muted">ไม่มีการแจ้งเตือน</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item text-center" href="{{ url_for('main.notifications') }}">
+                                ดูทั้งหมด
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- User Menu -->
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown">
+                            <div class="user-avatar me-2">
+                                {{ current_user.first_name[0] if current_user.first_name else 'U' }}
+                            </div>
+                            <span class="d-none d-md-inline">{{ current_user.full_name }}</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <h6 class="dropdown-header">
+                                {{ current_user.full_name }}<br>
+                                <small class="text-muted">{{ current_user.role.value.title() }}</small>
+                            </h6>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{{ url_for('auth.profile') }}">
+                                <i class="fas fa-user me-2"></i>ข้อมูลส่วนตัว
+                            </a>
+                            <a class="dropdown-item" href="{{ url_for('auth.change_password') }}">
+                                <i class="fas fa-key me-2"></i>เปลี่ยนรหัสผ่าน
+                            </a>
+                            {% if current_user.is_admin %}
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{{ url_for('main.settings') }}">
+                                <i class="fas fa-cog me-2"></i>ตั้งค่าระบบ
+                            </a>
+                            <a class="dropdown-item" href="{{ url_for('auth.manage_users') }}">
+                                <i class="fas fa-users me-2"></i>จัดการผู้ใช้
+                            </a>
+                            {% endif %}
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>ออกจากระบบ
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <a class="btn btn-primary btn-sm" href="{{ url_for('auth.login') }}">เข้าสู่ระบบ</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            {% if current_user.is_authenticated %}
+            <!-- Sidebar -->
+            <nav class="col-lg-2 sidebar p-0" id="sidebar">
+                <div class="p-3">
+                    <div class="nav flex-column">
+                        <!-- Dashboard -->
+                        <a class="nav-link {{ 'active' if request.endpoint == 'main.dashboard' }}" 
+                           href="{{ url_for('main.dashboard') }}">
+                            <i class="fas fa-tachometer-alt"></i>แดชบอร์ด
+                        </a>
+
+                        <!-- Tasks -->
+                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('tasks.') }}" 
+                           href="{{ url_for('tasks.list_tasks') }}">
+                            <i class="fas fa-tasks"></i>จัดการงาน
+                        </a>
+
+                        <!-- Customers -->
+                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('customers.') }}" 
+                           href="{{ url_for('customers.list_customers') }}">
+                            <i class="fas fa-users"></i>ลูกค้า
+                        </a>
+
+                        <!-- Service Jobs -->
+                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('service_jobs.') }}" 
+                           href="{{ url_for('service_jobs.list_jobs') }}">
+                            <i class="fas fa-wrench"></i>งานซ่อม
+                        </a>
+
+                        <!-- POS System -->
+                        {% if current_user.can_access('sales') %}
+                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('pos.') }}" 
+                           href="{{ url_for('pos.index') }}">
+                            <i class="fas fa-cash-register"></i>ระบบขาย
+                        </a>
+                        {% endif %}
+
+                        <!-- Reports -->
+                        {% if current_user.can_access('reports') %}
+                        <a class="nav-link {{ 'active' if request.endpoint == 'main.reports' }}" 
+                           href="{{ url_for('main.reports') }}">
+                            <i class="fas fa-chart-bar"></i>รายงาน
+                        </a>
+                        {% endif %}
+
+                        <!-- Admin Section -->
+                        {% if current_user.is_admin %}
+                        <hr class="text-white-50 my-3">
+                        <small class="text-white-50 px-3 mb-2">ผู้ดูแลระบบ</small>
+                        
+                        <a class="nav-link {{ 'active' if request.endpoint == 'auth.manage_users' }}" 
+                           href="{{ url_for('auth.manage_users') }}">
+                            <i class="fas fa-user-cog"></i>จัดการผู้ใช้
+                        </a>
+
+                        <a class="nav-link {{ 'active' if request.endpoint == 'main.settings' }}" 
+                           href="{{ url_for('main.settings') }}">
+                            <i class="fas fa-cog"></i>ตั้งค่าระบบ
+                        </a>
+
+                        <a class="nav-link {{ 'active' if request.endpoint == 'main.activity_log' }}" 
+                           href="{{ url_for('main.activity_log') }}">
+                            <i class="fas fa-history"></i>บันทึกกิจกรรม
+                        </a>
+                        {% endif %}
+
+                        <!-- Quick Actions -->
+                        <hr class="text-white-50 my-3">
+                        <small class="text-white-50 px-3 mb-2">การดำเนินการ</small>
+                        
+                        <a class="nav-link" href="#" onclick="quickAddTask()">
+                            <i class="fas fa-plus"></i>เพิ่มงานด่วน
+                        </a>
+
+                        <a class="nav-link" href="{{ url_for('customers.add_customer') }}">
+                            <i class="fas fa-user-plus"></i>เพิ่มลูกค้า
+                        </a>
+                    </div>
+                </div>
+            </nav>
+            {% endif %}
+
+            <!-- Main Content -->
+            <main class="col-lg-10 ms-sm-auto">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="container mt-3">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    {% if category == 'error' %}
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                    {% elif category == 'success' %}
+                                        <i class="fas fa-check-circle me-2"></i>
+                                    {% elif category == 'warning' %}
+                                        <i class="fas fa-exclamation-circle me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-info-circle me-2"></i>
+                                    {% endif %}
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Page Content -->
+                <div class="main-content">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    {% if current_user.is_authenticated %}
+    <footer class="footer text-center">
+        <div class="container">
+            <p class="mb-0">
+                © {{ current_year }} {{ business_name }} | 
+                เวอร์ชัน {{ app_version }} | 
+                <a href="tel:{{ business_phone }}" class="text-white">{{ business_phone }}</a>
+            </p>
+        </div>
+    </footer>
+    {% endif %}
+
+    <!-- Quick Add Task Modal -->
+    <div class="modal fade" id="quickTaskModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">เพิ่มงานด่วน</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="quickTaskForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="taskTitle" class="form-label">หัวข้องาน</label>
+                            <input type="text" class="form-control" id="taskTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskDescription" class="form-label">รายละเอียด</label>
+                            <textarea class="form-control" id="taskDescription" rows="3"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="taskPriority" class="form-label">ระดับความสำคัญ</label>
+                                <select class="form-select" id="taskPriority">
+                                    <option value="low">ต่ำ</option>
+                                    <option value="medium" selected>ปานกลาง</option>
+                                    <option value="high">สูง</option>
+                                    <option value="urgent">เร่งด่วน</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="taskDueDate" class="form-label">กำหนดเสร็จ</label>
+                                <input type="datetime-local" class="form-control" id="taskDueDate">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="loading spinner-border spinner-border-sm me-2"></span>
+                            สร้างงาน
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script>
+        // Toggle sidebar on mobile
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = event.target.closest('[onclick="toggleSidebar()"]');
+            
+            if (!sidebar.contains(event.target) && !toggleBtn && window.innerWidth <= 768) {
+                sidebar.classList.remove('show');
+            }
+        });
+
+        // Quick add task function
+        function quickAddTask() {
+            $('#quickTaskModal').modal('show');
+        }
+
+        // Quick task form submission
+        $('#quickTaskForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = $(this).find('button[type="submit"]');
+            const loading = submitBtn.find('.loading');
+            
+            // Show loading
+            loading.show();
+            submitBtn.prop('disabled', true);
+            
+            // Prepare data
+            const data = {
+                title: $('#taskTitle').val(),
+                description: $('#taskDescription').val(),
+                priority: $('#taskPriority').val(),
+                due_date: $('#taskDueDate').val()
+            };
+            
+            // Submit via AJAX
+            $.ajax({
+                url: '/api/quick_add_task',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(response) {
+                    if (response.success) {
+                        // Success
+                        $('#quickTaskModal').modal('hide');
+                        $('#quickTaskForm')[0].reset();
+                        
+                        // Show success message
+                        showAlert('success', 'สร้างงาน ' + response.task_number + ' เรียบร้อยแล้ว');
+                        
+                        // Refresh page if on tasks page
+                        if (window.location.pathname.includes('/tasks')) {
+                            setTimeout(() => location.reload(), 1500);
+                        }
+                    } else {
+                        showAlert('error', response.message || 'เกิดข้อผิดพลาดในการสร้างงาน');
+                    }
+                },
+                error: function() {
+                    showAlert('error', 'เกิดข้อผิดพลาดในการเชื่อมต่อ');
+                },
+                complete: function() {
+                    // Hide loading
+                    loading.hide();
+                    submitBtn.prop('disabled', false);
+                }
+            });
+        });
+
+        // Show alert function
+        function showAlert(type, message) {
+            const alertClass = type === 'error' ? 'danger' : type;
+            const iconClass = type === 'error' ? 'fa-exclamation-triangle' : 
+                             type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
+            
+            const alertHtml = `
+                <div class="alert alert-${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="fas ${iconClass} me-2"></i>${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Add to top of main content
+            $('.main-content').prepend(alertHtml);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                $('.alert').first().alert('close');
+            }, 5000);
+        }
+
+        // Load notifications
+        function loadNotifications() {
+            $.get('/api/notifications', function(data) {
+                const count = data.unread_count || 0;
+                $('#notificationCount').text(count).toggle(count > 0);
+                
+                if (data.notifications && data.notifications.length > 0) {
+                    const html = data.notifications.map(notification => `
+                        <div class="dropdown-item ${notification.is_read ? '' : 'fw-bold'}">
+                            <div class="d-flex justify-content-between">
+                                <span>${notification.title}</span>

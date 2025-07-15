@@ -1,0 +1,18 @@
+<!-- ============================================================================ -->
+<!-- templates/main/notifications.html - Notifications Page -->
+<!-- ============================================================================ -->
+{% extends "base.html" %}
+{% block title %}การแจ้งเตือน - {{ business_name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">การแจ้งเตือน</h1>
+</div>
+
+<div class="card">
+    <div class="card-body text-center">
+        <i class="fas fa-bell fa-3x text-muted mb-3"></i>
+        <h5>ไม่มีการแจ้งเตือน</h5>
+        <p class="text-muted">คุณไม่มีการแจ้งเตือนใหม่ในขณะนี้</p>
+    </div>
+</div>
+{% endblock %}

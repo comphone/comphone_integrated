@@ -1,0 +1,75 @@
+<!-- ============================================================================ -->
+<!-- templates/customers/list.html - Customer List -->
+<!-- ============================================================================ -->
+
+{% extends "base.html" %}
+
+{% block title %}จัดการลูกค้า{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-users me-2"></i>จัดการลูกค้า</h1>
+    <a href="{{ url_for('customers.create_customer') }}" class="btn btn-primary">
+        <i class="fas fa-user-plus me-2"></i>เพิ่มลูกค้าใหม่
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ชื่อ</th>
+                        <th>ประเภท</th>
+                        <th>เบอร์โทร</th>
+                        <th>อีเมล</th>
+                        <th>วันที่เพิ่ม</th>
+                        <th>การดำเนินการ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td>
+                            <div>
+                                <strong>{{ customer.name }}</strong>
+                                {% if customer.organization %}
+                                <br><small class="text-muted">{{ customer.organization }}</small>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'info' if customer.customer_type == 'business' else 'secondary' }}">
+                                {{ 'องค์กร' if customer.customer_type == 'business' else 'บุคคลทั่วไป' }}
+                            </span>
+                        </td>
+                        <td>{{ customer.phone or '-' }}</td>
+                        <td>{{ customer.email or '-' }}</td>
+                        <td>{{ customer.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" title="ดูรายละเอียด">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary" title="แก้ไข">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if not customers %}
+        <div class="text-center mt-4">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">ไม่มีลูกค้าในระบบ</h5>
+            <a href="{{ url_for('customers.create_customer') }}" class="btn btn-primary mt-2">เพิ่มลูกค้าแรก</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

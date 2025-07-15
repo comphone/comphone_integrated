@@ -1,0 +1,42 @@
+{# comphone/templates/core/customer_create_edit_form.html #}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>{{ title }}</h1> {# title จะเป็น 'เพิ่มลูกค้าใหม่' หรือ 'แก้ไขข้อมูลลูกค้า' #}
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+                {{ form.name.label(class="form-label fw-bold") }}
+                {{ form.name(class="form-control") }}
+                {% for error in form.name.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <div class="mb-3">
+                {{ form.phone.label(class="form-label fw-bold") }}
+                {{ form.phone(class="form-control") }}
+                {% for error in form.phone.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <div class="mb-3">
+                {{ form.address.label(class="form-label") }}
+                {{ form.address(class="form-control", rows=3) }}
+                {% for error in form.address.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <hr>
+            <div class="d-flex justify-content-end">
+                <a href="{{ url_for('core.customers') }}" class="btn btn-secondary me-2">ยกเลิก</a>
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

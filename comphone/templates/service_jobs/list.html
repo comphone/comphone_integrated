@@ -1,0 +1,69 @@
+<!-- ============================================================================ -->
+<!-- templates/service_jobs/list.html - Service Jobs List -->
+<!-- ============================================================================ -->
+
+{% extends "base.html" %}
+
+{% block title %}จัดการงานซ่อม{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-wrench me-2"></i>จัดการงานซ่อม</h1>
+    <a href="{{ url_for('service_jobs.create_service_job') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>สร้างงานซ่อมใหม่
+    </a>
+</div>
+
+<div class="row">
+    {% for job in jobs %}
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="card-title mb-0">{{ job.title }}</h6>
+                    <span class="badge bg-{{ 'success' if job.status == 'completed' else 'warning' if job.status == 'in_progress' else 'secondary' }}">
+                        {{ 'เสร็จสิ้น' if job.status == 'completed' else 'กำลังดำเนินการ' if job.status == 'in_progress' else 'รอดำเนินการ' }}
+                    </span>
+                </div>
+                
+                <p class="card-text text-muted small">{{ job.description[:100] }}{% if job.description|length > 100 %}...{% endif %}</p>
+                
+                <div class="row text-muted small">
+                    <div class="col-6">
+                        <i class="fas fa-user me-1"></i>{{ job.customer.name }}
+                    </div>
+                    <div class="col-6 text-end">
+                        <i class="fas fa-calendar me-1"></i>{{ job.created_date.strftime('%d/%m/%Y') }}
+                    </div>
+                </div>
+                
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="fas fa-hashtag me-1"></i>{{ job.job_number }}
+                        {% if job.assigned_to %}
+                        | <i class="fas fa-user-tag me-1"></i>{{ job.assigned_to.full_name }}
+                        {% endif %}
+                    </small>
+                </div>
+                
+                {% if job.estimated_cost %}
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="fas fa-money-bill me-1"></i>ประมาณการ: ฿{{ "%.2f"|format(job.estimated_cost) }}
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not jobs %}
+<div class="text-center mt-5">
+    <i class="fas fa-wrench fa-3x text-muted mb-3"></i>
+    <h5 class="text-muted">ไม่มีงานซ่อมในระบบ</h5>
+    <a href="{{ url_for('service_jobs.create_service_job') }}" class="btn btn-primary mt-2">สร้างงานซ่อมใหม่</a>
+</div>
+{% endif %}
+{% endblock %}

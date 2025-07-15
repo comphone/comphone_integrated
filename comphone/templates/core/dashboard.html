@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2><i class="bi bi-speedometer2"></i> หน้าหลัก</h2>
+<hr>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h4>{{ stats.total_tasks }}</h4>
+                <p>งานทั้งหมด</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <h4>{{ stats.pending_tasks }}</h4>
+                <p>งานค้าง</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h4>{{ stats.total_customers }}</h4>
+                <p>ลูกค้า</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h4>{{ stats.total_products }}</h4>
+                <p>สินค้า</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5><i class="bi bi-clock-history"></i> งานล่าสุด</h5>
+    </div>
+    <div class="card-body">
+        {% if recent_tasks %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ชื่องาน</th>
+                        <th>สถานะ</th>
+                        <th>วันที่สร้าง</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in recent_tasks %}
+                    <tr>
+                        <td>{{ task.title }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if task.status == 'completed' else 'warning' }}">
+                                {{ 'เสร็จสิ้น' if task.status == 'completed' else 'รอดำเนินการ' }}
+                            </span>
+                        </td>
+                        <td>{{ task.created_at.strftime('%d/%m/%Y') if task.created_at else '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-muted">ยังไม่มีงานในระบบ</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

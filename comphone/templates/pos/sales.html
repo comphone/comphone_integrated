@@ -1,0 +1,247 @@
+<!-- ============================================================================ -->
+<!-- templates/pos/sales.html - POS Sales Interface -->
+<!-- ============================================================================ -->
+
+{% extends "base.html" %}
+
+{% block title %}ระบบขาย (POS){% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-cash-register me-2"></i>ระบบขาย (POS)</h1>
+</div>
+
+<div class="row">
+    <!-- Products -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0">สินค้าและบริการ</h6>
+            </div>
+            <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                <div class="row">
+                    {% for product in products %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card product-card" onclick="addToCart({{ product.id }}, '{{ product.name }}', {{ product.price }})">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">{{ product.name }}</h6>
+                                <p class="card-text">
+                                    <strong>฿{{ "%.2f"|format(product.price) }}</strong>
+                                    {% if not product.is_service %}
+                                    <br><small class="text-muted">สต็อก: {{ product.stock_quantity }}</small>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cart -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <h6 class="m-0">ตะกร้าสินค้า</h6>
+                <button class="btn btn-sm btn-outline-danger" onclick="clearCart()">ล้าง</button>
+            </div>
+            <div class="card-body">
+                <!-- Customer Selection -->
+                <div class="mb-3">
+                    <label class="form-label">ลูกค้า</label>
+                    <select class="form-select" id="customer_select">
+                        <option value="">-- ลูกค้าทั่วไป --</option>
+                        {% for customer in customers %}
+                        <option value="{{ customer.id }}">{{ customer.display_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Cart Items -->
+                <div id="cart-items" style="max-height: 300px; overflow-y: auto;">
+                    <p class="text-muted text-center">ไม่มีสินค้าในตะกร้า</p>
+                </div>
+                
+                <!-- Summary -->
+                <hr>
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between">
+                        <span>ยอดรวม:</span>
+                        <span id="subtotal">฿0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>ภาษี (7%):</span>
+                        <span id="tax">฿0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between fw-bold">
+                        <span>รวมทั้งสิ้น:</span>
+                        <span id="total">฿0.00</span>
+                    </div>
+                </div>
+                
+                <!-- Payment Method -->
+                <div class="mb-3">
+                    <label class="form-label">วิธีการชำระเงิน</label>
+                    <select class="form-select" id="payment_method">
+                        <option value="cash">เงินสด</option>
+                        <option value="card">บัตรเครดิต</option>
+                        <option value="transfer">โอนเงิน</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-success w-100" onclick="processSale()" id="checkout-btn" disabled>
+                    <i class="fas fa-credit-card me-2"></i>ชำระเงิน
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let cart = [];
+
+function addToCart(productId, productName, price) {
+    const existingItem = cart.find(item => item.productId === productId);
+    
+    if (existingItem) {
+        existingItem.quantity++;
+        existingItem.total = existingItem.quantity * existingItem.price;
+    } else {
+        cart.push({
+            productId: productId,
+            name: productName,
+            price: price,
+            quantity: 1,
+            total: price
+        });
+    }
+    
+    updateCartDisplay();
+}
+
+function removeFromCart(productId) {
+    cart = cart.filter(item => item.productId !== productId);
+    updateCartDisplay();
+}
+
+function updateQuantity(productId, newQuantity) {
+    const item = cart.find(item => item.productId === productId);
+    if (item) {
+        if (newQuantity > 0) {
+            item.quantity = newQuantity;
+            item.total = item.quantity * item.price;
+        } else {
+            removeFromCart(productId);
+        }
+    }
+    updateCartDisplay();
+}
+
+function clearCart() {
+    cart = [];
+    updateCartDisplay();
+}
+
+function updateCartDisplay() {
+    const cartItems = document.getElementById('cart-items');
+    const checkoutBtn = document.getElementById('checkout-btn');
+    
+    if (cart.length === 0) {
+        cartItems.innerHTML = '<p class="text-muted text-center">ไม่มีสินค้าในตะกร้า</p>';
+        checkoutBtn.disabled = true;
+    } else {
+        let html = '';
+        cart.forEach(item => {
+            html += `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-0">${item.name}</h6>
+                        <small class="text-muted">฿${item.price.toFixed(2)} x ${item.quantity}</small>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-sm btn-outline-secondary me-1" onclick="updateQuantity(${item.productId}, ${item.quantity - 1})">-</button>
+                        <span class="mx-2">${item.quantity}</span>
+                        <button class="btn btn-sm btn-outline-secondary me-2" onclick="updateQuantity(${item.productId}, ${item.quantity + 1})">+</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${item.productId})">×</button>
+                    </div>
+                </div>
+            `;
+        });
+        cartItems.innerHTML = html;
+        checkoutBtn.disabled = false;
+    }
+    
+    // Update totals
+    const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
+    const tax = subtotal * 0.07;
+    const total = subtotal + tax;
+    
+    document.getElementById('subtotal').textContent = `฿${subtotal.toFixed(2)}`;
+    document.getElementById('tax').textContent = `฿${tax.toFixed(2)}`;
+    document.getElementById('total').textContent = `฿${total.toFixed(2)}`;
+}
+
+function processSale() {
+    if (cart.length === 0) return;
+    
+    const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
+    const tax = subtotal * 0.07;
+    const total = subtotal + tax;
+    
+    const saleData = {
+        customer_id: document.getElementById('customer_select').value || null,
+        items: cart.map(item => ({
+            product_id: item.productId,
+            quantity: item.quantity,
+            unit_price: item.price,
+            total_price: item.total
+        })),
+        subtotal: subtotal,
+        tax_amount: tax,
+        total_amount: total,
+        payment_method: document.getElementById('payment_method').value
+    };
+    
+    fetch('/pos/create_sale', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(saleData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('บันทึกการขายเรียบร้อย');
+            clearCart();
+            document.getElementById('customer_select').value = '';
+            document.getElementById('payment_method').value = 'cash';
+        } else {
+            alert('เกิดข้อผิดพลาด: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('เกิดข้อผิดพลาดในการบันทึก');
+    });
+}
+
+// Add click style to product cards
+document.addEventListener('DOMContentLoaded', function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .product-card {
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+    `;
+    document.head.appendChild(style);
+});
+</script>
+{% endblock %}

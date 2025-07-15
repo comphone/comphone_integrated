@@ -1,0 +1,67 @@
+<!-- ============================================================================ -->
+<!-- templates/customers/create.html - Create Customer -->
+<!-- ============================================================================ -->
+
+{% extends "base.html" %}
+
+{% block title %}เพิ่มลูกค้าใหม่{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-user-plus me-2"></i>เพิ่มลูกค้าใหม่</h1>
+    <a href="{{ url_for('customers.list_customers') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>กลับ
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">ชื่อ <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">เบอร์โทร</label>
+                            <input type="tel" class="form-control" id="phone" name="phone">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">อีเมล</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="customer_type" class="form-label">ประเภทลูกค้า</label>
+                            <select class="form-select" id="customer_type" name="customer_type">
+                                <option value="individual">บุคคลทั่วไป</option>
+                                <option value="business">องค์กร/บริษัท</option>
+                                <option value="government">หน่วยงานราชการ</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="organization" class="form-label">ชื่อองค์กร/บริษัท</label>
+                            <input type="text" class="form-control" id="organization" name="organization">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">ที่อยู่</label>
+                        <textarea class="form-control" id="address" name="address" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('customers.list_customers') }}" class="btn btn-secondary me-md-2">ยกเลิก</a>
+                        <button type="submit" class="btn btn-primary">เพิ่มลูกค้า</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

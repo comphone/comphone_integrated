@@ -1,0 +1,17 @@
+<!-- ============================================================================ -->
+<!-- templates/errors/404.html - 404 Error Page -->
+<!-- ============================================================================ -->
+{% extends "base.html" %}
+{% block title %}ไม่พบหน้าที่ต้องการ - {{ business_name }}{% endblock %}
+{% block content %}
+<div class="text-center">
+    <div class="error-page">
+        <h1 class="display-1 text-muted">404</h1>
+        <h2 class="mb-3">ไม่พบหน้าที่คุณต้องการ</h2>
+        <p class="lead mb-4">ขออภัย หน้าที่คุณกำลังมองหาไม่มีอยู่ในระบบ</p>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+            <i class="fas fa-home me-2"></i>กลับหน้าหลัก
+        </a>
+    </div>
+</div>
+{% endblock %}

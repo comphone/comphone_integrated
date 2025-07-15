@@ -1,0 +1,16 @@
+<!-- ============================================================================ -->
+<!-- templates/main/index.html -->
+<!-- ============================================================================ -->
+{% extends "base.html" %}
+{% block title %}{{ business_name }} - หน้าแรก{% endblock %}
+{% block content %}
+<div class="text-center">
+    <h1 class="display-4 mb-4">ยินดีต้อนรับสู่ {{ business_name }}</h1>
+    <p class="lead">ระบบบริหารงานซ่อมมือถือและจัดการลูกค้าแบบครบวงจร</p>
+    {% if not current_user.is_authenticated %}
+    <div class="mt-4">
+        <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">เข้าสู่ระบบ</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

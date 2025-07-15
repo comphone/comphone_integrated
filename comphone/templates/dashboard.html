@@ -1,0 +1,40 @@
+{# comphone/templates/core/dashboard.html #}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4"><i class="bi bi-speedometer2"></i> Dashboard</h1>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card text-center p-4 shadow-sm h-100">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                    <i class="bi bi-people-fill text-primary display-4 mb-3"></i>
+                    <h3 class="card-title fw-bold text-primary">{{ customer_count }}</h3>
+                    <p class="card-text text-muted">ลูกค้าทั้งหมด</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center p-4 shadow-sm h-100">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                    <i class="bi bi-box-seam-fill text-success display-4 mb-3"></i>
+                    <h3 class="card-title fw-bold text-success">{{ product_count }}</h3>
+                    <p class="card-text text-muted">รายการสินค้า</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center p-4 shadow-sm h-100">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                    <i class="bi bi-currency-dollar text-info display-4 mb-3"></i>
+                    <h3 class="card-title fw-bold text-info">{{ "%.2f"|format(sales_total) }}</h3>
+                    <p class="card-text text-muted">ยอดขายรวม</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# สามารถเพิ่มส่วนอื่นๆ ของ Dashboard ได้ที่นี่ #}
+</div>
+{% endblock %}

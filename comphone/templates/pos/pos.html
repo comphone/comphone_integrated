@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4"><i class="bi bi-cash-coin"></i> หน้าขาย (POS)</h1>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <i class="bi bi-search"></i> เลือกสินค้า
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <input type="text" id="product-search" class="form-control" placeholder="ค้นหาสินค้า...">
+                    </div>
+                    <div id="product-results" class="list-group">
+                        <p class="text-muted text-center" id="no-product-found" style="display: block;">ไม่พบสินค้า</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <i class="bi bi-cart"></i> ตะกร้าสินค้า
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="customer-select" class="form-label">ลูกค้า:</label>
+                        <select id="customer-select" class="form-select">
+                            <option value="">-- ลูกค้าทั่วไป --</option>
+                            {% for customer in customers %}
+                            <option value="{{ customer.id }}">{{ customer.name }}</option>
+                            {% endfor %} {# <-- {% endfor %} นี้ต้องมี #}
+                        </select>
+                    </div>
+                    
+                    <ul id="cart-items" class="list-group mb-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center text-muted" id="empty-cart-message">
+                            ยังไม่มีสินค้าในตะกร้า
+                        </li>
+                    </ul>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="mb-0">ยอดรวม:</h4>
+                        <h4 class="mb-0 text-success fw-bold"><span id="total-amount">0.00</span> บาท</h4>
+                    </div>
+
+                    <button id="checkout-btn" class="btn btn-success btn-lg w-100">ยืนยันการขาย</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const productSearch = document.getElementById('product-search');
+        const productResults = document.getElementById('product-results');
+        const noProductFound = document.getElementById('no-product-found');
+        const cartItemsList = document.getElementById('cart-items');
+        const emptyCartMessage = document.getElementById('empty-cart-message');
+        const totalAmountSpan = document.getElementById('total-amount');
+        const checkoutBtn = document.getElementById('checkout-btn');
+        const customerSelect = document.getElementById('customer-select');
+
+        let cart = []; // Array to hold items in the cart
+
+        // Function to update the cart display and total amount
+        function updateCartDisplay() {
+            cartItemsList.innerHTML = ''; // Clear current cart display
+            let total = 0;
+
+            if (cart.length === 0) {
+                emptyCartMessage.style.display = 'block';
+            } else {
+                emptyCartMessage.style.display = 'none';
+                cart.forEach(item => {
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
+                    listItem.innerHTML = `
+                        <div>
+                            ${item.name} <br>
+                            <small class="text-muted">${item.price.toFixed(2)} บาท/ชิ้น</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <button class="btn btn-sm btn-outline-secondary me-2 decrease-quantity" data-id="${item.id}">-</button>
+                            <span class="badge bg-primary rounded-pill me-2">${item.quantity}</span>
+                            <button class="btn btn-sm btn-outline-secondary me-2 increase-quantity" data-id="${item.id}">+</button>
+                            <button class="btn btn-sm btn-danger remove-item" data-id="${item.id}">x</button>
+                        </div>
+                    `;
+                    cartItemsList.appendChild(listItem);
+                    total += item.price * item.quantity;
+                });
+            }
+            totalAmountSpan.textContent = total.toFixed(2);
+        }
+
+        // Event listener for product search input
+        productSearch.addEventListener('input', debounce(function() {
+            const query = productSearch.value;
+            console.log('--- Product Search initiated ---');
+            console.log('Search Query:', query); // Debug: Log search query
+            if (query.length > 1) { // Only search if query is at least 2 characters
+                fetch(`/pos/api/search_products?q=${query}`)
+                    .then(response => {
+                        console.log('API Response status for search:', response.status); // Debug: Log response status
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(products => {
+                        console.log('Products received from API:', products); // Debug: Log products array
+                        productResults.innerHTML = ''; // Clear previous results
+                        if (products.length > 0) {
+                            noProductFound.style.display = 'none';
+                            products.forEach(product => {
+                                console.log('Rendering product:', product.name, 'Quantity:', product.quantity); // Debug: Log each product being rendered
+                                const productDiv = document.createElement('a');
+                                productDiv.href = '#'; // Prevent actual navigation
+                                productDiv.classList.add('list-group-item', 'list-group-item-action');
+                                productDiv.innerHTML = `
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">${product.name}</h5>
+                                        <small>${product.price.toFixed(2)} บาท</small>
+                                    </div>
+                                    <p class="mb-1 text-muted">คงเหลือ: ${product.quantity}</p>
+                                `;
+                                productDiv.addEventListener('click', (event) => {
+                                    event.preventDefault(); // Prevent default link behavior
+                                    addProductToCart(product);
+                                    productSearch.value = ''; // Clear search input
+                                    productResults.innerHTML = ''; // Clear search results
+                                    noProductFound.style.display = 'block'; // Show "No product found" message again
+                                });
+                                productResults.appendChild(productDiv);
+                            });
+                        } else {
+                            noProductFound.style.display = 'block';
+                            console.log('No products found for query:', query); // Debug: No products found
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching products:', error); // Debug: Log any fetch errors
+                        productResults.innerHTML = '';
+                        noProductFound.style.display = 'block';
+                    });
+            } else {
+                productResults.innerHTML = '';
+                noProductFound.style.display = 'block';
+                console.log('Search query too short, clearing results.'); // Debug: Query too short
+            }
+        }, 300)); // Debounce for 300ms
+
+        // Function to add a product to the cart
+        function addProductToCart(product) {
+            const existingItemIndex = cart.findIndex(item => item.id === product.id);
+
+            if (existingItemIndex > -1) {
+                // If item exists, increase quantity, but check available stock
+                if (cart[existingItemIndex].quantity < product.quantity) { // Check against original product quantity
+                    cart[existingItemIndex].quantity++;
+                } else {
+                    alert(`สินค้า "${product.name}" มีไม่พอในสต็อก`); // Use alert for simplicity, replace with custom modal
+                }
+            } else {
+                // Add new item to cart
+                cart.push({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    quantity: 1,
+                    max_quantity: product.quantity // Store original stock quantity
+                });
+            }
+            updateCartDisplay();
+        }
+
+        // Event listener for cart item quantity changes and removal
+        cartItemsList.addEventListener('click', function(event) {
+            const target = event.target;
+            const itemId = parseInt(target.dataset.id);
+            const itemIndex = cart.findIndex(item => item.id === itemId);
+
+            if (itemIndex === -1) return; // Item not found in cart
+
+            if (target.classList.contains('increase-quantity')) {
+                if (cart[itemIndex].quantity < cart[itemIndex].max_quantity) {
+                    cart[itemIndex].quantity++;
+                } else {
+                    alert(`สินค้า "${cart[itemIndex].name}" มีไม่พอในสต็อก`);
+                }
+            } else if (target.classList.contains('decrease-quantity')) {
+                cart[itemIndex].quantity--;
+                if (cart[itemIndex].quantity <= 0) {
+                    cart.splice(itemIndex, 1); // Remove if quantity is 0 or less
+                }
+            } else if (target.classList.contains('remove-item')) {
+                cart.splice(itemIndex, 1); // Remove item completely
+            }
+            updateCartDisplay();
+        });
+
+        // Event listener for checkout button
+        checkoutBtn.addEventListener('click', function() {
+            if (cart.length === 0) {
+                alert('กรุณาเพิ่มสินค้าลงในตะกร้าก่อนยืนยันการขาย'); // Use alert for simplicity
+                return;
+            }
+
+            const customerId = customerSelect.value ? parseInt(customerSelect.value) : null;
+
+            fetch('/pos/checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ cart: cart, customerId: customerId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message); // Display success message from server
+                    cart = []; // Clear cart
+                    updateCartDisplay();
+                    // Optional: Redirect or update UI further
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    }
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + data.message); // Display error message
+                }
+            })
+            .catch(error => {
+                console.error('Error during checkout:', error);
+                alert('เกิดข้อผิดพลาดในการทำรายการขาย. โปรดลองอีกครั้ง.');
+            });
+        });
+
+        // Debounce function to limit API calls
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
+        // Initial display update
+        updateCartDisplay();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>ใบเสร็จรับเงิน #{{ sale.id }}</title>
+    <style>
+        @font-face {
+            font-family: 'Sarabun';
+            src: url('https://fonts.gstatic.com/s/sarabun/v14/DtVjJx26TKEr37c9WBJDnlQN9_T_62o.woff2') format('woff2');
+            font-weight: normal;
+        }
+        @font-face {
+            font-family: 'Sarabun';
+            src: url('https://fonts.gstatic.com/s/sarabun/v14/DtVmJx26TKEr37c9YK5sulQN9_T_62o.woff2') format('woff2');
+            font-weight: bold;
+        }
+        body { font-family: 'Sarabun', sans-serif; font-size: 14px; }
+        .container { width: 90%; margin: auto; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .details, .items { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .details td { padding: 5px; }
+        .items th, .items td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        .items .text-right { text-align: right; }
+        .items .total-row { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ใบเสร็จรับเงิน / ใบส่งของ</h1>
+            <h2>ร้าน Comphone Service</h2>
+            <p>ที่อยู่ร้าน... เบอร์โทร...</p>
+        </div>
+        <table class="details">
+            <tr>
+                <td><strong>เลขที่:</strong> {{ sale.id }}</td>
+                <td class="text-right"><strong>วันที่:</strong> {{ sale.timestamp.strftime('%d/%m/%Y') }}</td>
+            </tr>
+            <tr>
+                <td colspan="2"><strong>ลูกค้า:</strong> {{ sale.customer.name if sale.customer else 'ลูกค้าทั่วไป' }}</td>
+            </tr>
+        </table>
+        <table class="items">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>รายการ</th>
+                    <th class="text-right">จำนวน</th>
+                    <th class="text-right">ราคา/หน่วย</th>
+                    <th class="text-right">รวมเป็นเงิน</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in sale.items %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ item.product.name }}</td>
+                    <td class="text-right">{{ item.quantity }}</td>
+                    <td class="text-right">{{ "%.2f"|format(item.price_per_item) }}</td>
+                    <td class="text-right">{{ "%.2f"|format(item.price_per_item * item.quantity) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td colspan="4" class="text-right">ยอดรวมสุทธิ</td>
+                    <td class="text-right">{{ "%.2f"|format(sale.total_amount) }} บาท</td>
+                </tr>
+            </tfoot>
+        </table>
+        <p>ผู้รับเงิน: ............................................</p>
+    </div>
+</body>
+</html>

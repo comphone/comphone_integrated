@@ -1,0 +1,84 @@
+<!-- ============================================================================ -->
+<!-- templates/main/dashboard.html -->
+<!-- ============================================================================ -->
+{% extends "base.html" %}
+{% block title %}แดชบอร์ด - {{ business_name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">แดชบอร์ด</h1>
+    <span class="text-muted">{{ moment().format('DD/MM/YYYY') if moment else 'วันนี้' }}</span>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ stats.total_customers or 0 }}</div>
+            <div class="stats-label">ลูกค้าทั้งหมด</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card bg-success">
+            <div class="stats-number">{{ stats.total_tasks or 0 }}</div>
+            <div class="stats-label">งานทั้งหมด</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card bg-warning">
+            <div class="stats-number">{{ stats.total_service_jobs or 0 }}</div>
+            <div class="stats-label">งานซ่อม</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card bg-info">
+            <div class="stats-number">{{ stats.total_products or 0 }}</div>
+            <div class="stats-label">สินค้า</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">การดำเนินการด่วน</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" onclick="quickAddTask()">
+                        <i class="fas fa-plus me-2"></i>เพิ่มงานใหม่
+                    </button>
+                    <a href="{{ url_for('customers.add_customer') }}" class="btn btn-success">
+                        <i class="fas fa-user-plus me-2"></i>เพิ่มลูกค้าใหม่
+                    </a>
+                    <a href="{{ url_for('pos.index') }}" class="btn btn-warning">
+                        <i class="fas fa-cash-register me-2"></i>ระบบขาย
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">ลูกค้าล่าสุด</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_customers %}
+                    {% for customer in recent_customers %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <strong>{{ customer.name }}</strong><br>
+                            <small class="text-muted">{{ customer.phone or 'ไม่มีเบอร์โทร' }}</small>
+                        </div>
+                        <small class="text-muted">ใหม่</small>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted mb-0">ยังไม่มีลูกค้า</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

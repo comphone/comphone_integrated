@@ -1,0 +1,84 @@
+<!-- ============================================================================ -->
+<!-- templates/pos/products.html - Products Management -->
+<!-- ============================================================================ -->
+
+{% extends "base.html" %}
+
+{% block title %}จัดการสินค้า{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-box me-2"></i>จัดการสินค้า</h1>
+    <button class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>เพิ่มสินค้าใหม่
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>รหัส/ชื่อสินค้า</th>
+                        <th>ประเภท</th>
+                        <th>ราคา</th>
+                        <th>สต็อก</th>
+                        <th>หมวดหมู่</th>
+                        <th>สถานะ</th>
+                        <th>การดำเนินการ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td>
+                            <div>
+                                <strong>{{ product.name }}</strong>
+                                {% if product.sku %}
+                                <br><small class="text-muted">{{ product.sku }}</small>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if product.is_service else 'primary' }}">
+                                {{ 'บริการ' if product.is_service else 'สินค้า' }}
+                            </span>
+                        </td>
+                        <td>฿{{ "%.2f"|format(product.price) }}</td>
+                        <td>
+                            {% if not product.is_service %}
+                                {% if product.is_low_stock %}
+                                <span class="text-danger">{{ product.stock_quantity }}</span>
+                                <i class="fas fa-exclamation-triangle text-danger ms-1" title="สต็อกต่ำ"></i>
+                                {% else %}
+                                {{ product.stock_quantity }}
+                                {% endif %}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>{{ product.category or '-' }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if product.is_active else 'secondary' }}">
+                                {{ 'ใช้งาน' if product.is_active else 'ปิดใช้งาน' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" title="ดูรายละเอียด">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary" title="แก้ไข">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

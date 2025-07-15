@@ -1,0 +1,89 @@
+<!-- ============================================================================ -->
+<!-- templates/tasks/create.html - Create Task Page -->
+<!-- ============================================================================ -->
+
+{% extends "base.html" %}
+
+{% block title %}สร้างงานใหม่{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-plus me-2"></i>สร้างงานใหม่</h1>
+    <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>กลับ
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">ชื่องาน <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">รายละเอียด</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="task_type" class="form-label">ประเภทงาน</label>
+                            <select class="form-select" id="task_type" name="task_type">
+                                <option value="general">ทั่วไป</option>
+                                <option value="service">งานซ่อม</option>
+                                <option value="sales">ขาย</option>
+                                <option value="maintenance">ดูแลรักษา</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="priority" class="form-label">ความสำคัญ</label>
+                            <select class="form-select" id="priority" name="priority">
+                                <option value="normal">ปกติ</option>
+                                <option value="high">สูง</option>
+                                <option value="low">ต่ำ</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="customer_id" class="form-label">ลูกค้า</label>
+                            <select class="form-select" id="customer_id" name="customer_id">
+                                <option value="">-- เลือกลูกค้า --</option>
+                                {% for customer in customers %}
+                                <option value="{{ customer.id }}">{{ customer.display_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="assigned_to_id" class="form-label">มอบหมายให้</label>
+                            <select class="form-select" id="assigned_to_id" name="assigned_to_id">
+                                <option value="">-- เลือกผู้รับผิดชอบ --</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="due_date" class="form-label">วันที่ครบกำหนด</label>
+                        <input type="date" class="form-control" id="due_date" name="due_date">
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-secondary me-md-2">ยกเลิก</a>
+                        <button type="submit" class="btn btn-primary">สร้างงาน</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

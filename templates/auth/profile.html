@@ -1,0 +1,49 @@
+<!-- ============================================================================ -->
+<!-- templates/auth/profile.html -->
+<!-- ============================================================================ -->
+{% extends "base.html" %}
+{% block title %}ข้อมูลส่วนตัว - {{ business_name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">ข้อมูลส่วนตัว</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3 text-center">
+                <div class="user-avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                    {{ user.first_name[0] if user.first_name else 'U' }}
+                </div>
+                <h5>{{ user.full_name }}</h5>
+                <p class="text-muted">{{ user.role.value.title() }}</p>
+            </div>
+            <div class="col-md-9">
+                <h6>ข้อมูลทั่วไป</h6>
+                <table class="table table-borderless">
+                    <tr>
+                        <td><strong>ชื่อผู้ใช้:</strong></td>
+                        <td>{{ user.username }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>อีเมล:</strong></td>
+                        <td>{{ user.email }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>เบอร์โทร:</strong></td>
+                        <td>{{ user.phone or 'ไม่ระบุ' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>แผนก:</strong></td>
+                        <td>{{ user.department or 'ไม่ระบุ' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>วันที่เข้าร่วม:</strong></td>
+                        <td>{{ user.created_at.strftime('%d/%m/%Y') if user.created_at else 'ไม่ทราบ' }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

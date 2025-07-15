@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>{{ title }}</h2>
+    <a href="{{ url_for('service.jobs') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> กลับไปรายการงานซ่อม
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5><i class="bi bi-info-circle-fill"></i> ข้อมูลงานซ่อม</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>ลูกค้า:</strong> {{ job.customer.name }}</p>
+                <p><strong>เบอร์โทร:</strong> {{ job.customer.phone or '-' }}</p>
+                <p><strong>วันที่สร้าง:</strong> {{ job.created_at.strftime('%d %B %Y') }}</p>
+                <p><strong>สถานะปัจจุบัน:</strong> <span class="badge bg-primary">{{ job.status }}</span></p>
+                <p><strong>รายละเอียด/อาการเสีย:</strong></p>
+                <p class="ms-3">{{ job.description }}</p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5><i class="bi bi-gear-wide-connected"></i> อะไหล่ที่ใช้ไป</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr><th>ชื่ออะไหล่</th><th class="text-center">จำนวน</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for part in job.parts_used %}
+                        <tr>
+                            <td>{{ part.product.name }}</td>
+                            <td class="text-center">{{ part.quantity_used }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="2" class="text-center text-muted">ยังไม่มีการเบิกอะไหล่</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5><i class="bi bi-box-arrow-down"></i> เบิกอะไหล่</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('service.add_part_to_job', job_id=job.id) }}" method="POST">
+                    {{ part_form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ part_form.product_id.label(class="form-label") }}
+                        {{ part_form.product_id(class="form-select") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ part_form.quantity_used.label(class="form-label") }}
+                        {{ part_form.quantity_used(class="form-control") }}
+                    </div>
+                    {{ part_form.submit(class="btn btn-info w-100") }}
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5><i class="bi bi-check2-circle"></i> อัปเดตสถานะ</h5>
+            </div>
+            <div class="card-body">
+                 <form action="{{ url_for('service.update_status', job_id=job.id) }}" method="POST">
+                    {{ status_form.hidden_tag() }}
+                     <div class="mb-3">
+                        {{ status_form.status.label(class="form-label") }}
+                        {{ status_form.status(class="form-select") }}
+                    </div>
+                    {{ status_form.submit(class="btn btn-warning w-100") }}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

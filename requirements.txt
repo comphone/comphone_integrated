@@ -1,0 +1,70 @@
+# Core Flask Dependencies
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Flask-Login==0.6.3
+Flask-Migrate==4.0.5
+Flask-WTF==1.1.1
+WTForms==3.0.1
+
+# Database
+SQLAlchemy==2.0.21
+
+# Security
+Werkzeug==2.3.7
+bcrypt==4.0.1
+
+# HTTP Requests
+requests==2.31.0
+
+# JSON and Data Processing
+python-dateutil==2.8.2
+python-dotenv==1.0.0
+
+# Email Support
+Flask-Mail==0.9.1
+
+# Rate Limiting
+Flask-Limiter==3.5.0
+
+# File Upload and Processing
+Pillow==10.0.1
+
+# Excel/CSV Processing
+pandas==2.1.1
+openpyxl==3.1.2
+
+# LINE Bot SDK
+line-bot-sdk==3.5.0
+
+# Google APIs
+google-api-python-client==2.100.0
+google-auth==2.23.3
+google-auth-oauthlib==1.1.0
+google-auth-httplib2==0.1.1
+
+# Task Scheduling (Optional)
+APScheduler==3.10.4
+
+# Development and Testing
+pytest==7.4.2
+pytest-flask==1.2.0
+pytest-cov==4.1.0
+
+# Production Server
+gunicorn==21.2.0
+
+# Monitoring and Logging
+Flask-Logging==0.1.0
+
+# Utils
+python-slugify==8.0.1
+qrcode==7.4.2
+
+# Timezone Support
+pytz==2023.3
+
+# Backup and Archive
+zipfile36==0.1.3
+
+# Environment Detection
+python-decouple==3.8

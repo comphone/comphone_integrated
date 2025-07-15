@@ -1,0 +1,21 @@
+<!-- ============================================================================ -->
+<!-- templates/customers/add.html -->
+<!-- ============================================================================ -->
+{% extends "base.html" %}
+{% block title %}เพิ่มลูกค้าใหม่ - {{ business_name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">เพิ่มลูกค้าใหม่</h1>
+    <a href="{{ url_for('customers.list_customers') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>กลับ
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body text-center">
+        <i class="fas fa-user-plus fa-3x text-muted mb-3"></i>
+        <h5>ฟอร์มเพิ่มลูกค้า</h5>
+        <p class="text-muted">ฟีเจอร์กำลังพัฒนา - ฟอร์มจะแสดงที่นี่</p>
+    </div>
+</div>
+{% endblock %}

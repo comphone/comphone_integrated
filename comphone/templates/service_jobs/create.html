@@ -1,0 +1,89 @@
+<!-- ============================================================================ -->
+<!-- templates/service_jobs/create.html - Create Service Job -->
+<!-- ============================================================================ -->
+
+{% extends "base.html" %}
+
+{% block title %}สร้างงานซ่อมใหม่{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-plus me-2"></i>สร้างงานซ่อมใหม่</h1>
+    <a href="{{ url_for('service_jobs.list_service_jobs') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>กลับ
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="customer_id" class="form-label">ลูกค้า <span class="text-danger">*</span></label>
+                        <select class="form-select" id="customer_id" name="customer_id" required>
+                            <option value="">-- เลือกลูกค้า --</option>
+                            {% for customer in customers %}
+                            <option value="{{ customer.id }}">{{ customer.display_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="title" class="form-label">ชื่องานซ่อม <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">รายละเอียดการซ่อม <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="job_type" class="form-label">ประเภทงาน</label>
+                            <select class="form-select" id="job_type" name="job_type">
+                                <option value="repair">ซ่อม</option>
+                                <option value="maintenance">ดูแลรักษา</option>
+                                <option value="installation">ติดตั้ง</option>
+                                <option value="inspection">ตรวจสอบ</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="priority" class="form-label">ความสำคัญ</label>
+                            <select class="form-select" id="priority" name="priority">
+                                <option value="normal">ปกติ</option>
+                                <option value="high">สูง</option>
+                                <option value="low">ต่ำ</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="assigned_to_id" class="form-label">มอบหมายให้ช่าง</label>
+                            <select class="form-select" id="assigned_to_id" name="assigned_to_id">
+                                <option value="">-- เลือกช่าง --</option>
+                                {% for tech in technicians %}
+                                <option value="{{ tech.id }}">{{ tech.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="estimated_cost" class="form-label">ประมาณการค่าใช้จ่าย (บาท)</label>
+                            <input type="number" class="form-control" id="estimated_cost" name="estimated_cost" step="0.01" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('service_jobs.list_service_jobs') }}" class="btn btn-secondary me-md-2">ยกเลิก</a>
+                        <button type="submit" class="btn btn-primary">สร้างงานซ่อม</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

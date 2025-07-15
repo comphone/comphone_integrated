@@ -1,0 +1,58 @@
+<!-- ============================================================================ -->
+<!-- templates/auth/register.html - Register User Page -->
+<!-- ============================================================================ -->
+{% extends "base.html" %}
+{% block title %}เพิ่มผู้ใช้ใหม่ - {{ business_name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">เพิ่มผู้ใช้ใหม่</h1>
+    <a href="{{ url_for('auth.manage_users') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>กลับ
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">เบอร์โทร</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" value="{{ user.phone or '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="department" class="form-label">แผนก</label>
+                                <input type="text" class="form-control" id="department" name="department" value="{{ user.department or '' }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="role" class="form-label">บทบาท</label>
+                        <select class="form-select" id="role" name="role" required>
+                            {% for role in user_roles %}
+                            <option value="{{ role.value }}" {{ 'selected' if role == user.role }}>{{ role.value.title() }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">รหัสผ่านใหม่ (เว้นว่างไว้หากไม่ต้องการเปลี่ยน)</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" minlength="6">
+                        <div class="form-text">กรอกเฉพาะเมื่อต้องการเปลี่ยนรหัสผ่าน</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('auth.manage_users') }}" class="btn btn-secondary">ยกเลิก</a>
+                        <button type="submit" class="btn btn-primary">บันทึกการเปลี่ยนแปลง</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

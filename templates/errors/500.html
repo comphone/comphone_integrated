@@ -1,0 +1,17 @@
+<!-- ============================================================================ -->
+<!-- templates/errors/500.html - 500 Server Error Page -->
+<!-- ============================================================================ -->
+{% extends "base.html" %}
+{% block title %}เกิดข้อผิดพลาด - {{ business_name }}{% endblock %}
+{% block content %}
+<div class="text-center">
+    <div class="error-page">
+        <h1 class="display-1 text-muted">500</h1>
+        <h2 class="mb-3">เกิดข้อผิดพลาดภายในระบบ</h2>
+        <p class="lead mb-4">ขออภัย เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่อีกครั้ง</p>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+            <i class="fas fa-home me-2"></i>กลับหน้าหลัก
+        </a>
+    </div>
+</div>
+{% endblock %}

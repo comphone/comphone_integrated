@@ -1,0 +1,16 @@
+/* สามารถเพิ่ม CSS ที่นี่ได้ */
+body {
+    font-family: 'Sarabun', sans-serif; /* ตัวอย่างการใช้ฟอนต์ภาษาไทย */
+}
+.pos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+}
+.product-card {
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+.product-card:hover {
+    transform: scale(1.05);
+}
