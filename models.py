@@ -31,7 +31,7 @@ class TaskPriority(enum.Enum):
 class ServiceJobStatus(enum.Enum):
     RECEIVED = 'received'
     DIAGNOSED = 'diagnosed'
-    WAITING_PARTS = 'waiting_parts'
+    WAITING_PARTS = 'waiting_for_parts'
     IN_REPAIR = 'in_repair'
     TESTING = 'testing'
     COMPLETED = 'completed'
@@ -336,6 +336,10 @@ class Product(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
+    # --- START: จุดที่แก้ไขใน Class Product ---
+    is_service_part = db.Column(db.Boolean, default=False, nullable=False)
+    # --- END: จุดที่แก้ไขใน Class Product ---
+    
     # Relationships
     sale_items = db.relationship('SaleItem', backref='product', lazy='dynamic')
     
@@ -604,6 +608,10 @@ class ServiceJob(db.Model):
     tasks = db.relationship('Task', backref='service_job', lazy='dynamic')
     creator = db.relationship('User', foreign_keys=[created_by], backref='created_service_jobs')
     
+    # --- START: จุดที่แก้ไขใน Class ServiceJob ---
+    parts_used = db.relationship('ServiceJobPart', backref='service_job', lazy='dynamic', cascade="all, delete-orphan")
+    # --- END: จุดที่แก้ไขใน Class ServiceJob ---
+    
     def generate_job_number(self):
         """Generate unique job number"""
         if not self.job_number:
@@ -634,6 +642,27 @@ class ServiceJob(db.Model):
     
     def __repr__(self):
         return f'<ServiceJob {self.job_number}>'
+
+# --- START: Class ใหม่ที่ต้องเพิ่มเข้ามา ---
+class ServiceJobPart(db.Model):
+    """
+    Model to track parts used in a service job.
+    """
+    __tablename__ = 'service_job_part' # ชื่อตาราง
+    id = db.Column(db.Integer, primary_key=True)
+    service_job_id = db.Column(db.Integer, db.ForeignKey('service_job.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+    unit_price = db.Column(db.Float, nullable=False) # ราคา ณ วันที่ใช้
+    
+    # Relationships
+    # ไม่ต้องมี backref ที่นี่ เพราะ ServiceJob มี `parts_used` อยู่แล้ว
+    # และ Product ก็จะมี relationship ไปยังตารางนี้
+
+    def __repr__(self):
+        return f'<ServiceJobPart Job:{self.service_job_id} Product:{self.product_id}>'
+# --- END: Class ใหม่ที่ต้องเพิ่มเข้ามา ---
+
 
 class Sale(db.Model):
     """Enhanced Sales model with detailed tracking"""

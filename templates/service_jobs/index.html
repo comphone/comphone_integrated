@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}รายการงานซ่อม{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-tools"></i> รายการงานซ่อม</h1>
+        <a href="{{ url_for('service_jobs.create_job') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle"></i> สร้างงานซ่อมใหม่
+        </a>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">{{ stats.pending }} งาน</h5>
+                    <p class="card-text">รอดำเนินการ</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">{{ stats.in_progress }} งาน</h5>
+                    <p class="card-text">กำลังซ่อม</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">{{ stats.waiting_for_parts }} งาน</h5>
+                    <p class="card-text">รออะไหล่</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">{{ stats.completed }} งาน</h5>
+                    <p class="card-text">ซ่อมเสร็จสิ้น</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>เลขที่งาน</th>
+                        <th>ชื่องาน</th>
+                        <th>ลูกค้า</th>
+                        <th>สถานะ</th>
+                        <th>ช่างผู้รับผิดชอบ</th>
+                        <th>วันที่แจ้ง</th>
+                        <th>ดำเนินการ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in jobs.items %}
+                    <tr>
+                        <td>{{ job.job_number }}</td>
+                        <td>{{ job.title }}</td>
+                        <td>{{ job.customer.name if job.customer else 'N/A' }}</td>
+                        <td><span class="badge {{ job.status.value | status_badge }}">{{ job.status.value }}</span></td>
+                        <td>{{ job.technician.full_name if job.technician else 'ยังไม่ระบุ' }}</td>
+                        <td>{{ job.created_at | datetime }}</td>
+                        <td>
+                            <a href="{{ url_for('service_jobs.view_job', job_id=job.id) }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i> ดูรายละเอียด
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center">ไม่พบข้อมูลงานซ่อม</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
