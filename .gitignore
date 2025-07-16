@@ -20,6 +20,7 @@ logs/
 # Credentials
 credentials/google_credentials.json
 credentials/google_token.json
+credentials.json
 *.pem
 *.key
 
