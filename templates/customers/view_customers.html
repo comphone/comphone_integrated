@@ -1,0 +1,578 @@
+{% extends "base.html" %}
+
+{% block title %}{{ customer.full_name }} - รายละเอียดลูกค้า{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-user text-primary"></i> {{ customer.full_name }}</h2>
+                    <p class="text-muted mb-0">รายละเอียดข้อมูลลูกค้า #{{ customer.id }}</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('customers.edit_customer', customer_id=customer.id) }}" class="btn btn-warning me-2">
+                        <i class="fas fa-edit"></i> แก้ไขข้อมูล
+                    </a>
+                    <a href="{{ url_for('customers.list_customers') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> กลับไปรายชื่อลูกค้า
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Customer Information -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user-circle me-2"></i>ข้อมูลลูกค้า
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="avatar bg-primary text-white rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="fas fa-user fa-2x"></i>
+                        </div>
+                        <h4 class="mt-3 mb-1">{{ customer.full_name }}</h4>
+                        <span class="badge bg-success">ลูกค้า #{{ customer.id }}</span>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-envelope text-primary me-3" style="width: 20px;"></i>
+                                <div>
+                                    <small class="text-muted">อีเมล</small>
+                                    <div>
+                                        {% if customer.email %}
+                                            <a href="mailto:{{ customer.email }}" class="text-decoration-none">{{ customer.email }}</a>
+                                        {% else %}
+                                            <span class="text-muted">ไม่ระบุ</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-phone text-success me-3" style="width: 20px;"></i>
+                                <div>
+                                    <small class="text-muted">โทรศัพท์</small>
+                                    <div>
+                                        {% if customer.phone %}
+                                            <a href="tel:{{ customer.phone }}" class="text-decoration-none">{{ customer.phone }}</a>
+                                        {% else %}
+                                            <span class="text-muted">ไม่ระบุ</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-map-marker-alt text-warning me-3" style="width: 20px;"></i>
+                                <div>
+                                    <small class="text-muted">ที่อยู่</small>
+                                    <div>
+                                        {% if customer.address %}
+                                            {{ customer.address }}
+                                        {% else %}
+                                            <span class="text-muted">ไม่ระบุ</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-calendar text-info me-3" style="width: 20px;"></i>
+                                <div>
+                                    <small class="text-muted">วันที่สร้าง</small>
+                                    <div>{{ customer.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if customer.notes %}
+                        <div class="col-12">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-sticky-note text-secondary me-3" style="width: 20px;"></i>
+                                <div>
+                                    <small class="text-muted">หมายเหตุ</small>
+                                    <div>{{ customer.notes }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <hr class="my-3">
+
+                    <!-- Quick Actions -->
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('service_jobs.create_job') }}?customer_id={{ customer.id }}" class="btn btn-success">
+                            <i class="fas fa-plus"></i> เพิ่มงานบริการ
+                        </a>
+                        <a href="{{ url_for('pos.index') }}?customer_id={{ customer.id }}" class="btn btn-info">
+                            <i class="fas fa-cash-register"></i> ขายสินค้า
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics and Activities -->
+        <div class="col-lg-8">
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-mobile-alt fa-2x mb-2"></i>
+                            <h4>{{ customer.devices.count() }}</h4>
+                            <small>อุปกรณ์</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-tools fa-2x mb-2"></i>
+                            <h4>{{ customer.service_jobs.count() }}</h4>
+                            <small>งานบริการ</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                            <h4>{{ customer.sales.count() }}</h4>
+                            <small>การซื้อ</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-clock fa-2x mb-2"></i>
+                            {% set active_jobs = customer.service_jobs.filter_by(status='in_progress').count() %}
+                            <h4>{{ active_jobs }}</h4>
+                            <small>งานที่ดำเนินอยู่</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Devices -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-mobile-alt me-2"></i>อุปกรณ์
+                            </h5>
+                            <button class="btn btn-sm btn-primary" onclick="showAddDeviceModal()">
+                                <i class="fas fa-plus"></i> เพิ่มอุปกรณ์
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            {% if customer.devices %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>ยี่ห้อ/รุ่น</th>
+                                                <th>IMEI</th>
+                                                <th>Serial Number</th>
+                                                <th>สภาพ</th>
+                                                <th>หมายเหตุ</th>
+                                                <th>จัดการ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for device in customer.devices %}
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-bold">{{ device.brand or '-' }} {{ device.model or '' }}</div>
+                                                </td>
+                                                <td>
+                                                    <code>{{ device.imei or '-' }}</code>
+                                                </td>
+                                                <td>
+                                                    <code>{{ device.serial_number or '-' }}</code>
+                                                </td>
+                                                <td>
+                                                    {% if device.condition %}
+                                                        <span class="badge bg-info">{{ device.condition }}</span>
+                                                    {% else %}
+                                                        <span class="text-muted">-</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if device.notes %}
+                                                        {{ device.notes[:30] }}{% if device.notes|length > 30 %}...{% endif %}
+                                                    {% else %}
+                                                        <span class="text-muted">-</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button class="btn btn-outline-warning" onclick="editDevice({{ device.id }})">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-danger" onclick="deleteDevice({{ device.id }})">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-mobile-alt fa-3x text-muted mb-3"></i>
+                                    <h6 class="text-muted">ยังไม่มีอุปกรณ์</h6>
+                                    <button class="btn btn-primary" onclick="showAddDeviceModal()">
+                                        <i class="fas fa-plus"></i> เพิ่มอุปกรณ์แรก
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Service Jobs -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-tools me-2"></i>ประวัติการบริการ
+                            </h5>
+                            <a href="{{ url_for('service_jobs.create_job') }}?customer_id={{ customer.id }}" class="btn btn-sm btn-success">
+                                <i class="fas fa-plus"></i> เพิ่มงานบริการ
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            {% if customer.service_jobs %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>หัวข้องาน</th>
+                                                <th>อุปกรณ์</th>
+                                                <th>สถานะ</th>
+                                                <th>ช่างเทคนิค</th>
+                                                <th>วันที่สร้าง</th>
+                                                <th>จัดการ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for job in customer.service_jobs.order_by(customer.service_jobs.created_at.desc()) %}
+                                            <tr>
+                                                <td>
+                                                    <span class="badge bg-light text-dark">#{{ job.id }}</span>
+                                                </td>
+                                                <td>
+                                                    <div class="fw-bold">{{ job.title }}</div>
+                                                    {% if job.description %}
+                                                        <small class="text-muted">{{ job.description[:50] }}{% if job.description|length > 50 %}...{% endif %}</small>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if job.device %}
+                                                        {{ job.device.brand }} {{ job.device.model }}
+                                                    {% else %}
+                                                        <span class="text-muted">ไม่ระบุ</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <span class="badge {{ job.status | status_badge }}">
+                                                        {{ job.status.value }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {% if job.technician %}
+                                                        {{ job.technician.first_name }} {{ job.technician.last_name }}
+                                                    {% else %}
+                                                        <span class="text-muted">ยังไม่มอบหมาย</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <small>{{ job.created_at.strftime('%d/%m/%Y') }}</small>
+                                                </td>
+                                                <td>
+                                                    <a href="{{ url_for('service_jobs.view_job', job_id=job.id) }}" class="btn btn-sm btn-outline-info">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-tools fa-3x text-muted mb-3"></i>
+                                    <h6 class="text-muted">ยังไม่มีประวัติการบริการ</h6>
+                                    <a href="{{ url_for('service_jobs.create_job') }}?customer_id={{ customer.id }}" class="btn btn-success">
+                                        <i class="fas fa-plus"></i> เพิ่มงานบริการแรก
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sales History -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-shopping-cart me-2"></i>ประวัติการซื้อ
+                            </h5>
+                            <a href="{{ url_for('pos.index') }}?customer_id={{ customer.id }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-cash-register"></i> ขายสินค้า
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            {% if customer.sales %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>ยอดรวม</th>
+                                                <th>วิธีชำระเงิน</th>
+                                                <th>พนักงานขาย</th>
+                                                <th>วันที่</th>
+                                                <th>จัดการ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for sale in customer.sales.order_by(customer.sales.created_at.desc()) %}
+                                            <tr>
+                                                <td>
+                                                    <span class="badge bg-light text-dark">#{{ sale.id }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="fw-bold text-success">฿{{ "{:,.2f}".format(sale.total_amount) }}</span>
+                                                </td>
+                                                <td>
+                                                    {% if sale.payment_method %}
+                                                        <span class="badge bg-info">{{ sale.payment_method }}</span>
+                                                    {% else %}
+                                                        <span class="text-muted">ไม่ระบุ</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if sale.creator %}
+                                                        {{ sale.creator.first_name }} {{ sale.creator.last_name }}
+                                                    {% else %}
+                                                        <span class="text-muted">-</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <small>{{ sale.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                                                </td>
+                                                <td>
+                                                    <a href="{{ url_for('pos.sale_detail', sale_id=sale.id) }}" class="btn btn-sm btn-outline-info">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                                    <h6 class="text-muted">ยังไม่มีประวัติการซื้อ</h6>
+                                    <a href="{{ url_for('pos.index') }}?customer_id={{ customer.id }}" class="btn btn-info">
+                                        <i class="fas fa-cash-register"></i> ขายสินค้าแรก
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Device Modal -->
+<div class="modal fade" id="addDeviceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus"></i> เพิ่มอุปกรณ์ใหม่
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addDeviceForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="deviceBrand" class="form-label">ยี่ห้อ</label>
+                                <input type="text" class="form-control" id="deviceBrand" placeholder="เช่น iPhone, Samsung">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="deviceModel" class="form-label">รุ่น</label>
+                                <input type="text" class="form-control" id="deviceModel" placeholder="เช่น 15 Pro, Galaxy S24">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="deviceImei" class="form-label">IMEI</label>
+                                <input type="text" class="form-control" id="deviceImei" placeholder="15 หลัก">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="deviceSerial" class="form-label">Serial Number</label>
+                                <input type="text" class="form-control" id="deviceSerial">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="deviceCondition" class="form-label">สภาพ</label>
+                        <select class="form-select" id="deviceCondition">
+                            <option value="">เลือกสภาพ</option>
+                            <option value="ใหม่">ใหม่</option>
+                            <option value="ใช้งานดี">ใช้งานดี</option>
+                            <option value="มีรอยขีดข่วน">มีรอยขีดข่วน</option>
+                            <option value="ชำรุด">ชำรุด</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="deviceNotes" class="form-label">หมายเหตุ</label>
+                        <textarea class="form-control" id="deviceNotes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-primary" onclick="submitDevice()">
+                    <i class="fas fa-save"></i> บันทึก
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showAddDeviceModal() {
+    new bootstrap.Modal(document.getElementById('addDeviceModal')).show();
+}
+
+function submitDevice() {
+    const deviceData = {
+        brand: document.getElementById('deviceBrand').value,
+        model: document.getElementById('deviceModel').value,
+        imei: document.getElementById('deviceImei').value,
+        serial_number: document.getElementById('deviceSerial').value,
+        condition: document.getElementById('deviceCondition').value,
+        notes: document.getElementById('deviceNotes').value,
+        customer_id: {{ customer.id }}
+    };
+
+    fetch('/api/devices/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(deviceData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            bootstrap.Modal.getInstance(document.getElementById('addDeviceModal')).hide();
+            document.getElementById('addDeviceForm').reset();
+            showAlert('เพิ่มอุปกรณ์เรียบร้อยแล้ว', 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            showAlert('เกิดข้อผิดพลาด: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('เกิดข้อผิดพลาดในการเพิ่มอุปกรณ์', 'error');
+    });
+}
+
+function editDevice(deviceId) {
+    // Implementation for editing device
+    showAlert('ฟีเจอร์แก้ไขอุปกรณ์จะพัฒนาในอนาคต', 'info');
+}
+
+function deleteDevice(deviceId) {
+    if (confirm('คุณแน่ใจหรือไม่ที่ต้องการลบอุปกรณ์นี้?')) {
+        fetch(`/api/devices/${deviceId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showAlert('ลบอุปกรณ์เรียบร้อยแล้ว', 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showAlert('เกิดข้อผิดพลาด: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('เกิดข้อผิดพลาดในการลบอุปกรณ์', 'error');
+        });
+    }
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-' + (type === 'error' ? 'danger' : type) + ' alert-dismissible fade show position-fixed';
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = 
+        '<strong>' + (type === 'success' ? 'สำเร็จ!' : type === 'info' ? 'ข้อมูล' : 'ข้อผิดพลาด!') + '</strong> ' + message +
+        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(function() {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

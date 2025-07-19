@@ -1,0 +1,289 @@
+<!-- Invoice Detail Template (for modal and print) -->
+<div class="invoice-preview">
+    <!-- Invoice Header -->
+    <div class="invoice-header">
+        <div class="company-info">
+            <div class="company-logo">
+                📱 COMPHONE SERVICE CENTER
+            </div>
+            <div class="company-details">
+                <p class="mb-1">ศูนย์บริการและซ่อมมือถือ</p>
+                <p class="mb-1">123 ถนนเทคโนโลยี กรุงเทพฯ 10110</p>
+                <p class="mb-1">โทร: 02-123-4567</p>
+                <p class="mb-0">เลขประจำตัวผู้เสียภาษี: 1234567890123</p>
+            </div>
+        </div>
+        <div class="invoice-details">
+            <h3 class="text-primary mb-3">ใบเสร็จ/ใบกำกับภาษี</h3>
+            <table class="table table-sm">
+                <tr>
+                    <td><strong>เลขที่:</strong></td>
+                    <td>{{ invoice.invoice_number }}</td>
+                </tr>
+                <tr>
+                    <td><strong>วันที่:</strong></td>
+                    <td>{{ invoice.issued_at.strftime('%d/%m/%Y') if invoice.issued_at else '-' }}</td>
+                </tr>
+                <tr>
+                    <td><strong>ครบกำหนด:</strong></td>
+                    <td>{{ (invoice.issued_at + timedelta(days=30)).strftime('%d/%m/%Y') if invoice.issued_at else '-' }}</td>
+                </tr>
+                <tr>
+                    <td><strong>สถานะ:</strong></td>
+                    <td>
+                        {% if invoice.payment_status == 'paid' %}
+                            <span class="badge bg-success">ชำระแล้ว</span>
+                        {% elif invoice.payment_status == 'pending' %}
+                            <span class="badge bg-warning">รอชำระ</span>
+                        {% elif invoice.payment_status == 'overdue' %}
+                            <span class="badge bg-danger">เกินกำหนด</span>
+                        {% else %}
+                            <span class="badge bg-secondary">ยกเลิก</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Customer Information -->
+    <div class="invoice-info">
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-primary mb-2">ข้อมูลลูกค้า</h6>
+                {% if invoice.customer %}
+                    <p class="mb-1"><strong>{{ invoice.customer.name }}</strong></p>
+                    <p class="mb-1">โทร: {{ invoice.customer.phone }}</p>
+                    {% if invoice.customer.email %}
+                    <p class="mb-1">อีเมล: {{ invoice.customer.email }}</p>
+                    {% endif %}
+                    {% if invoice.customer.address %}
+                    <p class="mb-0">ที่อยู่: {{ invoice.customer.address }}</p>
+                    {% endif %}
+                {% else %}
+                    <p class="mb-0">ลูกค้าทั่วไป</p>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-primary mb-2">รายละเอียดเพิ่มเติม</h6>
+                {% if invoice.sale_id %}
+                    <p class="mb-1"><strong>ประเภท:</strong> ขายสินค้า</p>
+                    <p class="mb-1"><strong>รหัสการขาย:</strong> #{{ invoice.sale_id }}</p>
+                    <p class="mb-1"><strong>พนักงานขาย:</strong> {{ invoice.sale.salesperson.username if invoice.sale else '-' }}</p>
+                {% elif invoice.service_job_id %}
+                    <p class="mb-1"><strong>ประเภท:</strong> งานบริการ</p>
+                    <p class="mb-1"><strong>รหัสงาน:</strong> #{{ invoice.service_job_id }}</p>
+                    <p class="mb-1"><strong>ช่างเทคนิค:</strong> {{ invoice.service_job.assigned_technician.username if invoice.service_job and invoice.service_job.assigned_technician else '-' }}</p>
+                {% else %}
+                    <p class="mb-1"><strong>ประเภท:</strong> ใบเสร็จทั่วไป</p>
+                {% endif %}
+                {% if invoice.paid_at %}
+                    <p class="mb-0"><strong>วันที่ชำระ:</strong> {{ invoice.paid_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Items -->
+    <div class="invoice-items">
+        <h6 class="text-primary mb-3">รายการสินค้า/บริการ</h6>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 5%;">#</th>
+                        <th style="width: 45%;">รายการ</th>
+                        <th style="width: 10%;" class="text-center">จำนวน</th>
+                        <th style="width: 15%;" class="text-end">ราคาต่อหน่วย</th>
+                        <th style="width: 10%;" class="text-end">ส่วนลด</th>
+                        <th style="width: 15%;" class="text-end">รวม</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if invoice.sale_id and invoice.sale %}
+                        {% for item in invoice.sale.items %}
+                        <tr>
+                            <td class="text-center">{{ loop.index }}</td>
+                            <td>
+                                <strong>{{ item.product.name }}</strong><br>
+                                <small class="text-muted">{{ item.product.description[:50] if item.product.description else '' }}</small>
+                            </td>
+                            <td class="text-center">{{ item.quantity }}</td>
+                            <td class="text-end">฿{{ "{:,.2f}".format(item.unit_price) }}</td>
+                            <td class="text-end">฿{{ "{:,.2f}".format(item.discount) }}</td>
+                            <td class="text-end">฿{{ "{:,.2f}".format((item.unit_price * item.quantity) - item.discount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% elif invoice.service_job_id and invoice.service_job %}
+                        <tr>
+                            <td class="text-center">1</td>
+                            <td>
+                                <strong>งานบริการ: {{ invoice.service_job.device.brand }} {{ invoice.service_job.device.model }}</strong><br>
+                                <small class="text-muted">{{ invoice.service_job.problem_description }}</small>
+                            </td>
+                            <td class="text-center">1</td>
+                            <td class="text-end">฿{{ "{:,.2f}".format(invoice.service_job.actual_cost or invoice.service_job.estimated_cost or 0) }}</td>
+                            <td class="text-end">฿{{ "{:,.2f}".format(invoice.discount_amount) }}</td>
+                            <td class="text-end">฿{{ "{:,.2f}".format((invoice.service_job.actual_cost or invoice.service_job.estimated_cost or 0) - invoice.discount_amount) }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td class="text-center">1</td>
+                            <td>
+                                <strong>บริการทั่วไป</strong><br>
+                                <small class="text-muted">ใบเสร็จรวม</small>
+                            </td>
+                            <td class="text-center">1</td>
+                            <td class="text-end">฿{{ "{:,.2f}".format(invoice.total_amount - invoice.tax_amount) }}</td>
+                            <td class="text-end">฿{{ "{:,.2f}".format(invoice.discount_amount) }}</td>
+                            <td class="text-end">฿{{ "{:,.2f}".format((invoice.total_amount - invoice.tax_amount) - invoice.discount_amount) }}</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Invoice Summary -->
+    <div class="invoice-summary">
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-primary mb-2">หมายเหตุ</h6>
+                <p class="mb-0">{{ invoice.notes or 'ขอขอบคุณที่ใช้บริการ' }}</p>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>รวมเป็นเงิน:</strong></td>
+                        <td class="text-end">฿{{ "{:,.2f}".format(invoice.total_amount - invoice.tax_amount) }}</td>
+                    </tr>
+                    {% if invoice.discount_amount > 0 %}
+                    <tr>
+                        <td><strong>ส่วนลด:</strong></td>
+                        <td class="text-end text-danger">-฿{{ "{:,.2f}".format(invoice.discount_amount) }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if invoice.tax_amount > 0 %}
+                    <tr>
+                        <td><strong>ภาษีมูลค่าเพิ่ม (7%):</strong></td>
+                        <td class="text-end">฿{{ "{:,.2f}".format(invoice.tax_amount) }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr class="summary-total">
+                        <td><strong>รวมทั้งสิ้น:</strong></td>
+                        <td class="text-end"><strong class="text-success">฿{{ "{:,.2f}".format(invoice.total_amount) }}</strong></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Information -->
+    {% if invoice.payment_status == 'paid' %}
+    <div class="mt-4 p-3 bg-success bg-opacity-10 border border-success rounded">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h6 class="text-success mb-1">
+                    <i class="fas fa-check-circle"></i> ชำระเงินแล้ว
+                </h6>
+                <p class="mb-0">วันที่ชำระ: {{ invoice.paid_at.strftime('%d/%m/%Y %H:%M') if invoice.paid_at else '-' }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <span class="badge bg-success fs-6">PAID</span>
+            </div>
+        </div>
+    </div>
+    {% elif invoice.payment_status == 'pending' %}
+    <div class="mt-4 p-3 bg-warning bg-opacity-10 border border-warning rounded">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h6 class="text-warning mb-1">
+                    <i class="fas fa-clock"></i> รอการชำระเงิน
+                </h6>
+                <p class="mb-0">กรุณาชำระเงินภายในกำหนด</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <span class="badge bg-warning fs-6">PENDING</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="text-center mt-4 pt-3 border-top">
+        <small class="text-muted">
+            ใบเสร็จนี้ออกโดยระบบ Comphone Service Center<br>
+            สอบถามข้อมูลเพิ่มเติม โทร: 02-123-4567 | Line: @comphone
+        </small>
+    </div>
+</div>
+
+<style>
+    .invoice-preview {
+        max-width: 210mm;
+        margin: 0 auto;
+        padding: 20mm;
+        background: white;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    
+    .invoice-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #eee;
+    }
+    
+    .company-logo {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+    
+    .company-details {
+        font-size: 0.9rem;
+        color: #666;
+    }
+    
+    .invoice-details {
+        text-align: right;
+        min-width: 300px;
+    }
+    
+    .invoice-info {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    
+    .invoice-items {
+        margin-bottom: 2rem;
+    }
+    
+    .invoice-summary {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+    }
+    
+    .summary-total {
+        border-top: 2px solid #dee2e6;
+        font-size: 1.1rem;
+    }
+    
+    @media print {
+        .invoice-preview {
+            box-shadow: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .no-print {
+            display: none !important;
+        }
+    }
+</style>

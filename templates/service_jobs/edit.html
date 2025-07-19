@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แก้ไขงาน #{{ job.id }} - Comphone Service Center</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #3498db 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: none;
+        }
+
+        .form-card .card-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #2980b9 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 0.75rem 2rem;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .status-preview {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+
+        .status-pending { background-color: #fff3cd; color: #856404; }
+        .status-in-progress { background-color: #cce5ff; color: #004085; }
+        .status-completed { background-color: #d4edda; color: #155724; }
+        .status-cancelled { background-color: #f8d7da; color: #721c24; }
+
+        .required {
+            color: var(--danger-color);
+        }
+
+        .help-text {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        .info-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .readonly-field {
+            background-color: #f8f9fa;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <!-- Back Button -->
+        <div class="mb-3">
+            <a href="{{ url_for('view_service_job', job_id=job.id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> กลับสู่รายละเอียดงาน
+            </a>
+        </div>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-2"><i class="fas fa-edit"></i> แก้ไขงานบริการ #{{ job.id }}</h1>
+                    <p class="mb-0">แก้ไขข้อมูลงานซ่อมแซมและบริการ</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <span class="badge bg-light text-dark fs-6">สถานะปัจจุบัน: 
+                        {% set status_text = {
+                            'pending': 'รอดำเนินการ',
+                            'in_progress': 'กำลังดำเนินการ',
+                            'completed': 'เสร็จสิ้น', 
+                            'cancelled': 'ยกเลิก'
+                        } %}
+                        {{ status_text.get(job.status.value if job.status else 'pending', 'รอดำเนินการ') }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <form method="POST">
+            <div class="row">
+                <div class="col-md-8">
+                    <!-- Customer & Device Info (Read-only) -->
+                    <div class="info-section">
+                        <h6 class="mb-3"><i class="fas fa-info-circle"></i> ข้อมูลลูกค้าและอุปกรณ์</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">ลูกค้า</label>
+                                    <input type="text" class="form-control readonly-field" 
+                                           value="{{ job.customer.name }} ({{ job.customer.phone }})" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">อุปกรณ์</label>
+                                    <input type="text" class="form-control readonly-field" 
+                                           value="{{ job.device.brand }} {{ job.device.model }}" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Form -->
+                    <div class="form-card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-edit"></i> แก้ไขข้อมูลงาน</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Problem Description -->
+                            <div class="form-group">
+                                <label class="form-label">รายละเอียดปัญหา <span class="required">*</span></label>
+                                <textarea class="form-control" name="problem_description" rows="4" required>{{ job.problem_description }}</textarea>
+                                <div class="help-text">อธิบายปัญหาและอาการที่พบ</div>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="form-group">
+                                <label class="form-label">สถานะงาน <span class="required">*</span></label>
+                                <select class="form-select" name="status" id="statusSelect" required>
+                                    <option value="pending" {{ 'selected' if job.status.value == 'pending' }}>รอดำเนินการ</option>
+                                    <option value="in_progress" {{ 'selected' if job.status.value == 'in_progress' }}>กำลังดำเนินการ</option>
+                                    <option value="completed" {{ 'selected' if job.status.value == 'completed' }}>เสร็จสิ้น</option>
+                                    <option value="cancelled" {{ 'selected' if job.status.value == 'cancelled' }}>ยกเลิก</option>
+                                </select>
+                                <div id="statusPreview" class="status-preview"></div>
+                            </div>
+
+                            <!-- Assigned Technician -->
+                            <div class="form-group">
+                                <label class="form-label">ช่างเทคนิคที่รับผิดชอบ</label>
+                                <select class="form-select" name="assigned_technician_id">
+                                    <option value="">-- ยังไม่มอบหมาย --</option>
+                                    {% for tech in technicians %}
+                                    <option value="{{ tech.id }}" {{ 'selected' if job.assigned_technician_id == tech.id }}>
+                                        {{ tech.username }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Dates -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">วันที่คาดว่าเสร็จ</label>
+                                        <input type="date" class="form-control" name="expected_completion_date" 
+                                               value="{{ job.expected_completion_date.strftime('%Y-%m-%d') if job.expected_completion_date else '' }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">วันที่รับงาน</label>
+                                        <input type="text" class="form-control readonly-field" 
+                                               value="{{ job.created_at.strftime('%d/%m/%Y %H:%M') if job.created_at else '-' }}" readonly>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Costs -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">ราคาประเมิน (บาท)</label>
+                                        <input type="number" class="form-control" name="estimated_cost" 
+                                               step="0.01" placeholder="0.00" 
+                                               value="{{ job.estimated_cost if job.estimated_cost else '' }}">
+                                        <div class="help-text">ราคาประเมินเบื้องต้น</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">ราคาจริง (บาท)</label>
+                                        <input type="number" class="form-control" name="actual_cost" 
+                                               step="0.01" placeholder="0.00"
+                                               value="{{ job.actual_cost if job.actual_cost else '' }}">
+                                        <div class="help-text">ราคาจริงหลังซ่อมเสร็จ</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Notes -->
+                            <div class="form-group">
+                                <label class="form-label">หมายเหตุ</label>
+                                <textarea class="form-control" name="notes" rows="3" 
+                                          placeholder="หมายเหตุเพิ่มเติม...">{{ job.notes or '' }}</textarea>
+                                <div class="help-text">หมายเหตุสำหรับการติดตามงาน</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <!-- Current Job Info -->
+                    <div class="form-card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-info-circle"></i> ข้อมูลปัจจุบัน</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <small class="text-muted">รหัสงาน</small>
+                                <div class="fw-bold">#{{ job.id }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <small class="text-muted">วันที่สร้าง</small>
+                                <div>{{ job.created_at.strftime('%d/%m/%Y %H:%M') if job.created_at else '-' }}</div>
+                            </div>
+                            {% if job.completed_at %}
+                            <div class="mb-3">
+                                <small class="text-muted">วันที่เสร็จสิ้น</small>
+                                <div>{{ job.completed_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                            </div>
+                            {% endif %}
+                            <div class="mb-3">
+                                <small class="text-muted">ช่างปัจจุบัน</small>
+                                <div>{{ job.assigned_technician.username if job.assigned_technician else 'ยังไม่มอบหมาย' }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> บันทึกการแก้ไข
+                        </button>
+                        <a href="{{ url_for('view_service_job', job_id=job.id) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> ยกเลิก
+                        </a>
+                        <a href="{{ url_for('service_jobs') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-list"></i> ดูงานทั้งหมด
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Status preview functionality
+        function updateStatusPreview() {
+            const statusSelect = document.getElementById('statusSelect');
+            const statusPreview = document.getElementById('statusPreview');
+            const selectedValue = statusSelect.value;
+            
+            const statusClasses = {
+                'pending': 'status-pending',
+                'in_progress': 'status-in-progress',
+                'completed': 'status-completed',
+                'cancelled': 'status-cancelled'
+            };
+            
+            const statusTexts = {
+                'pending': 'รอดำเนินการ',
+                'in_progress': 'กำลังดำเนินการ',
+                'completed': 'เสร็จสิ้น',
+                'cancelled': 'ยกเลิก'
+            };
+            
+            // Remove all status classes
+            statusPreview.className = 'status-preview';
+            
+            // Add new class and text
+            if (selectedValue && statusClasses[selectedValue]) {
+                statusPreview.classList.add(statusClasses[selectedValue]);
+                statusPreview.textContent = statusTexts[selectedValue];
+                statusPreview.style.display = 'inline-block';
+            } else {
+                statusPreview.style.display = 'none';
+            }
+        }
+
+        // Initialize status preview on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatusPreview();
+            
+            // Update preview when status changes
+            document.getElementById('statusSelect').addEventListener('change', updateStatusPreview);
+        });
+
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const problemDescription = document.querySelector('textarea[name="problem_description"]').value.trim();
+            const status = document.querySelector('select[name="status"]').value;
+            
+            if (!problemDescription) {
+                e.preventDefault();
+                alert('กรุณากรอกรายละเอียดปัญหา');
+                return false;
+            }
+            
+            if (!status) {
+                e.preventDefault();
+                alert('กรุณาเลือกสถานะงาน');
+                return false;
+            }
+            
+            // Confirm if changing to completed status
+            if (status === 'completed') {
+                const actualCost = document.querySelector('input[name="actual_cost"]').value;
+                if (!actualCost || parseFloat(actualCost) <= 0) {
+                    if (!confirm('คุณยังไม่ได้กรอกราคาจริง ต้องการดำเนินการต่อหรือไม่?')) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+            }
+            
+            return true;
+        });
+
+        // Auto-calculate completion time if status is completed
+        document.getElementById('statusSelect').addEventListener('change', function() {
+            if (this.value === 'completed') {
+                const completionNote = document.querySelector('textarea[name="notes"]');
+                const currentTime = new Date().toLocaleString('th-TH');
+                
+                if (!completionNote.value.includes('เสร็จสิ้นเมื่อ')) {
+                    completionNote.value += (completionNote.value ? '\n' : '') + `เสร็จสิ้นเมื่อ: ${currentTime}`;
+                }
+            }
+        });
+    </script>
+</body>
+</html><input type="number" class="form-control" name="actual_cost" 
+                                               step="0.01" placeholder="0.00"
+                                               value="{{ job.actual_cost if job.actual_cost else '' }}">
+                                        <div class="help-text">ราคาจริงหลังซ่อมเสร็จ</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Notes -->
+                            <div class="form-group">
+                                <label class="form-label">หมายเหตุ</label>
+                                <textarea class="form-control" name="notes" rows="3" 
+                                          placeholder="หมายเหตุเพิ่มเติม...">{{ job.notes or '' }}</textarea>
+                                <div class="help-text">หมายเหตุสำหรับการติดตามงาน</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <!-- Current Job Info -->
+                    <div class="form-card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-info-circle"></i> ข้อมูลปัจจุบัน</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <small class="text-muted">รหัสงาน</small>
+                                <div class="fw-bold">#{{ job.id }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <small class="text-muted">วันที่สร้าง</small>
+                                <div>{{ job.created_at.strftime('%d/%m/%Y %H:%M') if job.created_at else '-' }}</div>
+                            </div>
+                            {% if job.completed_at %}
+                            <div class="mb-3">
+                                <small class="text-muted">วันที่เสร็จสิ้น</small>
+                                <div>{{ job.completed_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                            </div>
+                            {% endif %}
+                            <div class="mb-3">
+                                <small class="text-muted">ช่างปัจจุบัน</small>
+                                <div>{{ job.assigned_technician.username if job.assigned_technician else 'ยังไม่มอบหมาย' }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> บันทึกการแก้ไข
+                        </button>
+                        <a href="{{ url_for('view_service_job', job_id=job.id) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> ยกเลิก
+                        </a>
+                        <a href="{{ url_for('service_jobs') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-list"></i> ดูงานทั้งหมด
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Status preview functionality
+        function updateStatusPreview() {
+            const statusSelect = document.getElementById('statusSelect');
+            const statusPreview = document.getElementById('statusPreview');
+            const selectedValue = statusSelect.value;
+            
+            const statusClasses = {
+                'pending': 'status-pending',
+                'in_progress': 'status-in-progress',
+                'completed': 'status-completed',
+                'cancelled': 'status-cancelled'
+            };
+            
+            const statusTexts = {
+                'pending': 'รอดำเนินการ',
+                'in_progress': 'กำลังดำเนินการ',
+                'completed': 'เสร็จสิ้น',
+                'cancelled': 'ยกเลิก'
+            };
+            
+            // Remove all status classes
+            statusPreview.className = 'status-preview';
+            
+            // Add new class and text
+            if (selectedValue && statusClasses[selectedValue]) {
+                statusPreview.classList.add(statusClasses[selectedValue]);
+                statusPreview.textContent = statusTexts[selectedValue];
+                statusPreview.style.display = 'inline-block';
+            } else {
+                statusPreview.style.display = 'none';
+            }
+        }
+
+        // Initialize status preview on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatusPreview();
+            
+            // Update preview when status changes
+            document.getElementById('statusSelect').addEventListener('change', updateStatusPreview);
+        });
+
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const problemDescription = document.querySelector('textarea[name="problem_description"]').value.trim();
+            const status = document.querySelector('select[name="status"]').value;
+            
+            if (!problemDescription) {
+                e.preventDefault();
+                alert('กรุณากรอกรายละเอียดปัญหา');
+                return false;
+            }
+            
+            if (!status) {
+                e.preventDefault();
+                alert('กรุณาเลือกสถานะงาน');
+                return false;
+            }
+            
+            // Confirm if changing to completed status
+            if (status === 'completed') {
+                const actualCost = document.querySelector('input[name="actual_cost"]').value;
+                if (!actualCost || parseFloat(actualCost) <= 0) {
+                    if (!confirm('คุณยังไม่ได้กรอกราคาจริง ต้องการดำเนินการต่อหรือไม่?')) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+            }
+            
+            return true;
+        });
+
+        // Auto-calculate completion time if status is completed
+        document.getElementById('statusSelect').addEventListener('change', function() {
+            if (this.value === 'completed') {
+                const completionNote = document.querySelector('textarea[name="notes"]');
+                const currentTime = new Date().toLocaleString('th-TH');
+                
+                if (!completionNote.value.includes('เสร็จสิ้นเมื่อ')) {
+                    completionNote.value += (completionNote.value ? '\n' : '') + `เสร็จสิ้นเมื่อ: ${currentTime}`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,483 @@
+{% extends "base.html" %}
+
+{% block title %}แก้ไขข้อมูล {{ customer.full_name }} - Comphone Integrated System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-user-edit text-primary"></i> แก้ไขข้อมูลลูกค้า</h2>
+                    <p class="text-muted mb-0">แก้ไขข้อมูล {{ customer.full_name }} #{{ customer.id }}</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('customers.view_customer', customer_id=customer.id) }}" class="btn btn-outline-info me-2">
+                        <i class="fas fa-eye"></i> ดูข้อมูลลูกค้า
+                    </a>
+                    <a href="{{ url_for('customers.list_customers') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> กลับไปรายชื่อลูกค้า
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user-circle me-2"></i>แก้ไขข้อมูลลูกค้า
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="customerEditForm">
+                        {{ form.hidden_tag() if form }}
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted border-bottom pb-2 mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>ข้อมูลพื้นฐาน
+                                </h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="first_name" class="form-label">
+                                        ชื่อ <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="first_name" 
+                                           name="first_name" 
+                                           value="{{ customer.first_name }}"
+                                           required
+                                           placeholder="กรอกชื่อ">
+                                    <div class="invalid-feedback">
+                                        กรุณากรอกชื่อ
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="last_name" class="form-label">
+                                        นามสกุล <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="last_name" 
+                                           name="last_name" 
+                                           value="{{ customer.last_name }}"
+                                           required
+                                           placeholder="กรอกนามสกุล">
+                                    <div class="invalid-feedback">
+                                        กรุณากรอกนามสกุล
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted border-bottom pb-2 mb-3">
+                                    <i class="fas fa-address-book me-2"></i>ข้อมูลติดต่อ
+                                </h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">
+                                        <i class="fas fa-envelope me-1"></i>อีเมล
+                                    </label>
+                                    <input type="email" 
+                                           class="form-control" 
+                                           id="email" 
+                                           name="email"
+                                           value="{{ customer.email or '' }}"
+                                           placeholder="example@email.com">
+                                    <div class="invalid-feedback">
+                                        กรุณากรอกอีเมลให้ถูกต้อง
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label">
+                                        <i class="fas fa-phone me-1"></i>หมายเลขโทรศัพท์
+                                    </label>
+                                    <input type="tel" 
+                                           class="form-control" 
+                                           id="phone" 
+                                           name="phone"
+                                           value="{{ customer.phone or '' }}"
+                                           placeholder="08x-xxx-xxxx"
+                                           pattern="[0-9]{2,3}-[0-9]{3}-[0-9]{4}">
+                                    <div class="form-text">
+                                        รูปแบบ: 08x-xxx-xxxx หรือ 02-xxx-xxxx
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Address Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted border-bottom pb-2 mb-3">
+                                    <i class="fas fa-map-marker-alt me-2"></i>ที่อยู่
+                                </h6>
+                            </div>
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">
+                                        <i class="fas fa-home me-1"></i>ที่อยู่
+                                    </label>
+                                    <textarea class="form-control" 
+                                              id="address" 
+                                              name="address" 
+                                              rows="3"
+                                              placeholder="กรอกที่อยู่เต็ม เช่น บ้านเลขที่ ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์">{{ customer.address or '' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted border-bottom pb-2 mb-3">
+                                    <i class="fas fa-sticky-note me-2"></i>ข้อมูลเพิ่มเติม
+                                </h6>
+                            </div>
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="notes" class="form-label">
+                                        <i class="fas fa-comment-alt me-1"></i>หมายเหตุ
+                                    </label>
+                                    <textarea class="form-control" 
+                                              id="notes" 
+                                              name="notes" 
+                                              rows="3"
+                                              placeholder="ข้อมูลเพิ่มเติม เช่น ความต้องการพิเศษ หรือหมายเหตุสำคัญ">{{ customer.notes or '' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted border-bottom pb-2 mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>ข้อมูลระบบ
+                                </h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">วันที่สร้าง</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           value="{{ customer.created_at.strftime('%d/%m/%Y %H:%M') }}" 
+                                           readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">วันที่แก้ไขล่าสุด</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           value="{{ customer.updated_at.strftime('%d/%m/%Y %H:%M') if customer.updated_at else 'ยังไม่มีการแก้ไข' }}" 
+                                           readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <a href="{{ url_for('customers.view_customer', customer_id=customer.id) }}" class="btn btn-secondary">
+                                            <i class="fas fa-times"></i> ยกเลิก
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <button type="reset" class="btn btn-outline-warning me-2" onclick="resetForm()">
+                                            <i class="fas fa-undo"></i> คืนค่าเดิม
+                                        </button>
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="fas fa-save"></i> บันทึกการแก้ไข
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Customer Statistics -->
+            <div class="card mt-4 bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-chart-bar text-info me-2"></i>สถิติลูกค้า
+                    </h6>
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="border-end">
+                                <h4 class="text-primary">{{ customer.devices.count() }}</h4>
+                                <small class="text-muted">อุปกรณ์</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border-end">
+                                <h4 class="text-success">{{ customer.service_jobs.count() }}</h4>
+                                <small class="text-muted">งานบริการ</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border-end">
+                                <h4 class="text-info">{{ customer.sales.count() }}</h4>
+                                <small class="text-muted">การซื้อ</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            {% set active_jobs = customer.service_jobs.filter_by(status='in_progress').count() %}
+                            <h4 class="text-warning">{{ active_jobs }}</h4>
+                            <small class="text-muted">งานที่ดำเนินอยู่</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help Card -->
+            <div class="card mt-4 bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-lightbulb text-warning me-2"></i>เกร็ดความรู้
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled mb-0">
+                                <li><i class="fas fa-check text-success me-2"></i>ข้อมูลจะถูกอัปเดตทันที</li>
+                                <li><i class="fas fa-check text-success me-2"></i>ประวัติการแก้ไขถูกบันทึกไว้</li>
+                                <li><i class="fas fa-check text-success me-2"></i>สามารถยกเลิกการแก้ไขได้</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled mb-0">
+                                <li><i class="fas fa-info-circle text-info me-2"></i>การแก้ไขไม่กระทบงานบริการ</li>
+                                <li><i class="fas fa-info-circle text-info me-2"></i>ข้อมูลเก่าจะถูกสำรองไว้</li>
+                                <li><i class="fas fa-info-circle text-info me-2"></i>สามารถแก้ไขได้หลายครั้ง</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-warning">
+                    <i class="fas fa-exclamation-triangle"></i> ยืนยันการแก้ไข
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>คุณแน่ใจหรือไม่ที่ต้องการบันทึกการแก้ไขข้อมูลลูกค้า?</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    การแก้ไขจะมีผลทันที และจะถูกบันทึกในประวัติการแก้ไข
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-warning" id="confirmSave">
+                    <i class="fas fa-save"></i> บันทึกการแก้ไข
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Store original values
+const originalValues = {
+    first_name: "{{ customer.first_name }}",
+    last_name: "{{ customer.last_name }}",
+    email: "{{ customer.email or '' }}",
+    phone: "{{ customer.phone or '' }}",
+    address: "{{ customer.address or '' }}",
+    notes: "{{ customer.notes or '' }}"
+};
+
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var form = document.getElementById('customerEditForm');
+        
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            if (form.checkValidity() === true) {
+                // Check if any changes were made
+                if (hasChanges()) {
+                    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+                } else {
+                    showAlert('ไม่มีการเปลี่ยนแปลงข้อมูล', 'info');
+                }
+            }
+            form.classList.add('was-validated');
+        }, false);
+    }, false);
+})();
+
+// Check if form has changes
+function hasChanges() {
+    const current = {
+        first_name: document.getElementById('first_name').value,
+        last_name: document.getElementById('last_name').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        address: document.getElementById('address').value,
+        notes: document.getElementById('notes').value
+    };
+    
+    for (let key in originalValues) {
+        if (current[key] !== originalValues[key]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Reset form to original values
+function resetForm() {
+    for (let key in originalValues) {
+        const element = document.getElementById(key);
+        if (element) {
+            element.value = originalValues[key];
+        }
+    }
+    document.getElementById('customerEditForm').classList.remove('was-validated');
+    showAlert('คืนค่าเดิมเรียบร้อยแล้ว', 'success');
+}
+
+// Confirm save
+document.getElementById('confirmSave').addEventListener('click', function() {
+    bootstrap.Modal.getInstance(document.getElementById('confirmModal')).hide();
+    
+    const form = document.getElementById('customerEditForm');
+    const formData = new FormData(form);
+    
+    showAlert('กำลังบันทึกข้อมูล...', 'info');
+    
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.redirected) {
+            showAlert('บันทึกข้อมูลเรียบร้อยแล้ว', 'success');
+            setTimeout(() => {
+                window.location.href = response.url;
+            }, 1500);
+        } else {
+            return response.text();
+        }
+    })
+    .then(data => {
+        if (data) {
+            // If there are validation errors, show them
+            showAlert('เกิดข้อผิดพลาดในการบันทึก', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
+    });
+});
+
+// Phone number formatting
+document.getElementById('phone').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    
+    if (value.length >= 10) {
+        if (value.startsWith('02')) {
+            // Bangkok landline: 02-xxx-xxxx
+            value = value.substring(0, 9);
+            e.target.value = value.replace(/(\d{2})(\d{3})(\d{4})/, '$1-$2-$3');
+        } else if (value.startsWith('0')) {
+            // Mobile: 08x-xxx-xxxx
+            value = value.substring(0, 10);
+            e.target.value = value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+        }
+    }
+});
+
+// Real-time validation feedback
+document.getElementById('email').addEventListener('blur', function() {
+    const email = this.value;
+    if (email && !isValidEmail(email)) {
+        this.classList.add('is-invalid');
+    } else {
+        this.classList.remove('is-invalid');
+        if (email) this.classList.add('is-valid');
+    }
+});
+
+function isValidEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
+// Auto-capitalize names
+document.getElementById('first_name').addEventListener('input', function() {
+    this.value = capitalizeWords(this.value);
+});
+
+document.getElementById('last_name').addEventListener('input', function() {
+    this.value = capitalizeWords(this.value);
+});
+
+function capitalizeWords(str) {
+    return str.replace(/\w\S*/g, function(txt) {
+        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    });
+}
+
+// Show alert function
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-' + (type === 'error' ? 'danger' : type) + ' alert-dismissible fade show position-fixed';
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = 
+        '<strong>' + (type === 'success' ? 'สำเร็จ!' : type === 'info' ? 'ข้อมูล' : 'ข้อผิดพลาด!') + '</strong> ' + message +
+        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(function() {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Warn before leaving if there are unsaved changes
+window.addEventListener('beforeunload', function(e) {
+    if (hasChanges()) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+</script>
+{% endblock %}

@@ -1,13 +1,12 @@
 """
-Comphone Integrated System - Final Consolidated Database Models
-This is the complete and final version of the database models,
-incorporating all features for POS, service, and task management.
+Comphone Integrated System - Fixed Database Models
+แก้ไขปัญหา foreign key และ relationship ทั้งหมด
 """
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import json
 import enum
 
@@ -52,12 +51,11 @@ class UserRole(enum.Enum):
     SALES = 'sales'
     SUPPORT = 'support'
 
-# Association table for many-to-many relationship between Task and User
+# แก้ไข Association table ให้ระบุ foreign_keys ชัดเจน
 task_assignees = db.Table('task_assignees',
     db.Column('task_id', db.Integer, db.ForeignKey('task.id'), primary_key=True),
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-    db.Column('assigned_at', db.DateTime, default=lambda: datetime.now(timezone.utc)),
-    db.Column('assigned_by', db.Integer, db.ForeignKey('user.id'))
+    db.Column('assigned_at', db.DateTime, default=lambda: datetime.now(timezone.utc))
 )
 
 class User(UserMixin, db.Model):
@@ -108,26 +106,50 @@ class User(UserMixin, db.Model):
     last_login = db.Column(db.DateTime)
     last_activity = db.Column(db.DateTime)
     
-    # Relationships - Fixed with proper foreign_keys specification
-    created_tasks = db.relationship('Task', foreign_keys='Task.created_by', backref='creator', lazy='dynamic')
-    assigned_tasks = db.relationship('Task',
-                                   secondary=task_assignees,
-                                   primaryjoin='User.id == task_assignees.c.user_id',
-                                   secondaryjoin='Task.id == task_assignees.c.task_id',
-                                   backref=db.backref('assignees', lazy='dynamic'),
-                                   lazy='dynamic')
-    service_jobs = db.relationship('ServiceJob', foreign_keys='ServiceJob.assigned_technician', backref='technician', lazy='dynamic')
-    sales = db.relationship('Sale', backref='salesperson', lazy='dynamic', foreign_keys='Sale.salesperson_id')
-    created_customers = db.relationship('Customer', backref='created_by_user', lazy='dynamic')
-    
     def set_password(self, password):
-        """Set password hash"""
+        """Set user's password"""
         self.password_hash = generate_password_hash(password)
     
     def check_password(self, password):
-        """Check password"""
+        """Check if provided password matches user's password"""
         return check_password_hash(self.password_hash, password)
-    
+
+    def get_full_name(self):
+        """Get user's full name"""
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        elif self.first_name:
+            return self.first_name
+        elif self.last_name:
+            return self.last_name
+        else:
+            return self.username
+
+    def update_last_login(self):
+        """Update last login timestamp"""
+        self.last_login = datetime.now(timezone.utc)
+        db.session.commit()
+
+    def to_dict(self):
+        """Convert user to dictionary"""
+        return {
+            'id': self.id,
+            'username': self.username,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'email': self.email,
+            'phone': self.phone,
+            'role': self.role.value if self.role else None,
+            'active': self.is_active,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'last_login': self.last_login.isoformat() if self.last_login else None
+        }
+
+    @property
+    def full_name(self):
+        """Property to easily access the full name."""
+        return self.get_full_name()
+
     def set_skills(self, skills_list):
         """Set technician skills as JSON"""
         self.skill_set = json.dumps(skills_list) if skills_list else None
@@ -143,11 +165,6 @@ class User(UserMixin, db.Model):
     def get_notification_preferences(self):
         """Get notification preferences from JSON"""
         return json.loads(self.notification_preferences) if self.notification_preferences else {}
-    
-    @property
-    def full_name(self):
-        """Get full name"""
-        return f"{self.first_name} {self.last_name}"
     
     @property
     def is_admin(self):
@@ -220,11 +237,21 @@ class Customer(db.Model):
     # Foreign Keys
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     
-    # Relationships
-    tasks = db.relationship('Task', backref='customer', lazy='dynamic')
-    service_jobs = db.relationship('ServiceJob', backref='customer', lazy='dynamic')
-    sales = db.relationship('Sale', backref='customer', lazy='dynamic')
-    devices = db.relationship('CustomerDevice', backref='customer', lazy='dynamic')
+    # เพิ่ม property สำหรับ backward compatibility กับระบบเดิม
+    @property
+    def first_name(self):
+        """Backward compatibility - แยกชื่อจาก name"""
+        if ' ' in self.name:
+            return self.name.split(' ')[0]
+        return self.name
+    
+    @property 
+    def last_name(self):
+        """Backward compatibility - แยกนามสกุลจาก name"""
+        if ' ' in self.name:
+            parts = self.name.split(' ')
+            return ' '.join(parts[1:]) if len(parts) > 1 else ''
+        return ''
     
     def set_tags(self, tags_list):
         """Set customer tags as JSON"""
@@ -274,8 +301,12 @@ class CustomerDevice(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
+    # เพิ่ม created_by สำหรับ compatibility
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    
     # Relationships
-    service_jobs = db.relationship('ServiceJob', backref='device', lazy='dynamic')
+    customer = db.relationship('Customer', backref='devices')
+    creator = db.relationship('User', backref='created_devices')
     
     def __repr__(self):
         return f'<Device {self.brand} {self.model}>'
@@ -336,12 +367,7 @@ class Product(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
-    # --- START: จุดที่แก้ไขใน Class Product ---
     is_service_part = db.Column(db.Boolean, default=False, nullable=False)
-    # --- END: จุดที่แก้ไขใน Class Product ---
-    
-    # Relationships
-    sale_items = db.relationship('SaleItem', backref='product', lazy='dynamic')
     
     def set_skill_requirements(self, skills_list):
         """Set required skills as JSON"""
@@ -375,6 +401,151 @@ class Product(db.Model):
     
     def __repr__(self):
         return f'<Product {self.name}>'
+
+class ServiceJob(db.Model):
+    """Enhanced Service Job model for repair tracking"""
+    __tablename__ = 'service_job'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Basic Information
+    job_number = db.Column(db.String(20), unique=True, nullable=False, index=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    
+    # Customer and Device
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)
+    device_id = db.Column(db.Integer, db.ForeignKey('customer_device.id'))
+    
+    # Job Classification
+    service_type = db.Column(db.String(50))
+    category = db.Column(db.String(50))
+    priority = db.Column(db.Enum(TaskPriority), default=TaskPriority.MEDIUM)
+    status = db.Column(db.Enum(ServiceJobStatus), default=ServiceJobStatus.RECEIVED, index=True)
+    
+    # Technician Assignment
+    assigned_technician = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Problem and Solution
+    reported_problem = db.Column(db.Text)
+    diagnosis = db.Column(db.Text)
+    solution = db.Column(db.Text)
+    work_performed = db.Column(db.Text)
+    
+    # เพิ่ม field สำหรับ backward compatibility
+    problem_description = db.Column(db.Text)  # alias สำหรับ reported_problem
+    
+    # Parts and Labor
+    parts_needed = db.Column(db.Text)
+    labor_hours = db.Column(db.Float, default=0.0)
+    parts_cost = db.Column(db.Float, default=0.0)
+    labor_cost = db.Column(db.Float, default=0.0)
+    additional_costs = db.Column(db.Float, default=0.0)
+    
+    # เพิ่ม field สำหรับ compatibility กับระบบเดิม
+    total_cost = db.Column(db.Float, default=0.0)
+    
+    # Estimates and Pricing
+    estimated_cost = db.Column(db.Float)
+    quoted_price = db.Column(db.Float)
+    final_price = db.Column(db.Float)
+    customer_approved = db.Column(db.Boolean, default=False)
+    approval_date = db.Column(db.DateTime)
+    
+    # Scheduling
+    received_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    promised_date = db.Column(db.DateTime)
+    completed_date = db.Column(db.DateTime)
+    delivered_date = db.Column(db.DateTime)
+    
+    # เพิ่ม field สำหรับ compatibility
+    estimated_completion = db.Column(db.Date)
+    completed_at = db.Column(db.DateTime)
+    
+    # Quality Control
+    tested = db.Column(db.Boolean, default=False)
+    test_results = db.Column(db.Text)
+    quality_check_passed = db.Column(db.Boolean)
+    quality_notes = db.Column(db.Text)
+    
+    # Warranty
+    warranty_period = db.Column(db.Integer, default=30)
+    warranty_terms = db.Column(db.Text)
+    warranty_void_date = db.Column(db.Date)
+    
+    # Customer Communication
+    customer_notified = db.Column(db.Boolean, default=False)
+    customer_satisfaction = db.Column(db.Integer)
+    customer_feedback = db.Column(db.Text)
+    
+    # Internal Notes
+    internal_notes = db.Column(db.Text)
+    special_instructions = db.Column(db.Text)
+    notes = db.Column(db.Text)  # alias สำหรับ internal_notes
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    # Relationships
+    customer = db.relationship('Customer', backref='service_jobs')
+    device = db.relationship('CustomerDevice', backref='service_jobs')
+    technician = db.relationship('User', foreign_keys=[assigned_technician], backref='assigned_service_jobs')
+    creator = db.relationship('User', foreign_keys=[created_by], backref='created_service_jobs')
+    
+    def __init__(self, **kwargs):
+        super(ServiceJob, self).__init__(**kwargs)
+        if not self.job_number:
+            self.job_number = self.generate_job_number()
+        # Sync fields for backward compatibility
+        if self.reported_problem and not self.problem_description:
+            self.problem_description = self.reported_problem
+        elif self.problem_description and not self.reported_problem:
+            self.reported_problem = self.problem_description
+    
+    def generate_job_number(self):
+        """Generate unique job number"""
+        if not self.job_number:
+            import random
+            import string
+            prefix = 'SRV'
+            suffix = ''.join(random.choices(string.digits, k=6))
+            self.job_number = f"{prefix}{suffix}"
+        return self.job_number
+    
+    def calculate_total_cost(self):
+        """Calculate total cost"""
+        self.total_cost = (self.parts_cost or 0) + (self.labor_cost or 0) + (self.additional_costs or 0)
+        return self.total_cost
+    
+    @property
+    def profit_margin(self):
+        """Calculate profit margin"""
+        if self.final_price and self.total_cost:
+            return self.final_price - self.total_cost
+        return 0
+    
+    @property
+    def is_overdue(self):
+        """Check if job is overdue"""
+        if self.promised_date and self.status not in [ServiceJobStatus.COMPLETED, ServiceJobStatus.DELIVERED]:
+            return datetime.now(timezone.utc) > self.promised_date
+        return False
+    
+    # เพิ่ม property สำหรับ backward compatibility กับระบบเดิม
+    @property
+    def technician_id(self):
+        """Backward compatibility alias"""
+        return self.assigned_technician
+    
+    @technician_id.setter
+    def technician_id(self, value):
+        """Backward compatibility alias"""
+        self.assigned_technician = value
+    
+    def __repr__(self):
+        return f'<ServiceJob {self.job_number}>'
 
 class Task(db.Model):
     """Enhanced Task model with advanced tracking"""
@@ -433,11 +604,20 @@ class Task(db.Model):
     
     # Self-referential relationship for subtasks
     parent_id = db.Column(db.Integer, db.ForeignKey('task.id'))
+    
+    # แก้ไข Relationships โดยระบุ foreign_keys ชัดเจน
+    customer = db.relationship('Customer', backref='tasks')
+    service_job = db.relationship('ServiceJob', backref='tasks')
+    creator = db.relationship('User', foreign_keys=[created_by], backref='created_tasks')
     subtasks = db.relationship('Task', backref=db.backref('parent_task', remote_side=[id]), lazy='dynamic')
     
-    # Relationships
-    attachments = db.relationship('TaskAttachment', backref='task', lazy='dynamic', cascade='all, delete-orphan')
-    comments = db.relationship('TaskComment', backref='task', lazy='dynamic', cascade='all, delete-orphan')
+    # แก้ไข many-to-many relationship โดยระบุ foreign_keys
+    assignees = db.relationship('User', 
+                               secondary=task_assignees,
+                               primaryjoin=id == task_assignees.c.task_id,
+                               secondaryjoin=User.id == task_assignees.c.user_id,
+                               backref=db.backref('assigned_tasks', lazy='dynamic'),
+                               lazy='dynamic')
     
     def generate_task_number(self):
         """Generate unique task number"""
@@ -472,197 +652,6 @@ class Task(db.Model):
     
     def __repr__(self):
         return f'<Task {self.title}>'
-
-class TaskAttachment(db.Model):
-    """Task attachments for file uploads"""
-    __tablename__ = 'task_attachment'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
-    
-    # File Information
-    filename = db.Column(db.String(255), nullable=False)
-    original_filename = db.Column(db.String(255), nullable=False)
-    file_path = db.Column(db.String(500), nullable=False)
-    file_size = db.Column(db.Integer)
-    mime_type = db.Column(db.String(100))
-    
-    # Google Drive Integration
-    google_drive_id = db.Column(db.String(100))
-    google_drive_url = db.Column(db.String(500))
-    
-    # Metadata
-    uploaded_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    description = db.Column(db.Text)
-    is_public = db.Column(db.Boolean, default=False)
-    
-    # Timestamps
-    uploaded_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    
-    # Relationships
-    uploader = db.relationship('User', backref='uploaded_attachments')
-    
-    def __repr__(self):
-        return f'<Attachment {self.filename}>'
-
-class TaskComment(db.Model):
-    """Task comments for communication"""
-    __tablename__ = 'task_comment'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
-    
-    # Comment Content
-    content = db.Column(db.Text, nullable=False)
-    is_internal = db.Column(db.Boolean, default=False)
-    
-    # Author Information
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    
-    # Timestamps
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
-    
-    # Relationships
-    author = db.relationship('User', backref='task_comments')
-    
-    def __repr__(self):
-        return f'<Comment on Task {self.task_id}>'
-
-class ServiceJob(db.Model):
-    """Enhanced Service Job model for repair tracking"""
-    __tablename__ = 'service_job'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    
-    # Basic Information
-    job_number = db.Column(db.String(20), unique=True, nullable=False, index=True)
-    title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text)
-    
-    # Customer and Device
-    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)
-    device_id = db.Column(db.Integer, db.ForeignKey('customer_device.id'))
-    
-    # Job Classification
-    service_type = db.Column(db.String(50))
-    category = db.Column(db.String(50))
-    priority = db.Column(db.Enum(TaskPriority), default=TaskPriority.MEDIUM)
-    status = db.Column(db.Enum(ServiceJobStatus), default=ServiceJobStatus.RECEIVED, index=True)
-    
-    # Technician Assignment
-    assigned_technician = db.Column(db.Integer, db.ForeignKey('user.id'))
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    
-    # Problem and Solution
-    reported_problem = db.Column(db.Text)
-    diagnosis = db.Column(db.Text)
-    solution = db.Column(db.Text)
-    work_performed = db.Column(db.Text)
-    
-    # Parts and Labor
-    parts_needed = db.Column(db.Text)
-    labor_hours = db.Column(db.Float, default=0.0)
-    parts_cost = db.Column(db.Float, default=0.0)
-    labor_cost = db.Column(db.Float, default=0.0)
-    additional_costs = db.Column(db.Float, default=0.0)
-    
-    # Estimates and Pricing
-    estimated_cost = db.Column(db.Float)
-    quoted_price = db.Column(db.Float)
-    final_price = db.Column(db.Float)
-    customer_approved = db.Column(db.Boolean, default=False)
-    approval_date = db.Column(db.DateTime)
-    
-    # Scheduling
-    received_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    promised_date = db.Column(db.DateTime)
-    completed_date = db.Column(db.DateTime)
-    delivered_date = db.Column(db.DateTime)
-    
-    # Quality Control
-    tested = db.Column(db.Boolean, default=False)
-    test_results = db.Column(db.Text)
-    quality_check_passed = db.Column(db.Boolean)
-    quality_notes = db.Column(db.Text)
-    
-    # Warranty
-    warranty_period = db.Column(db.Integer, default=30)
-    warranty_terms = db.Column(db.Text)
-    warranty_void_date = db.Column(db.Date)
-    
-    # Customer Communication
-    customer_notified = db.Column(db.Boolean, default=False)
-    customer_satisfaction = db.Column(db.Integer)
-    customer_feedback = db.Column(db.Text)
-    
-    # Internal Notes
-    internal_notes = db.Column(db.Text)
-    special_instructions = db.Column(db.Text)
-    
-    # Timestamps
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
-    
-    # Relationships
-    tasks = db.relationship('Task', backref='service_job', lazy='dynamic')
-    creator = db.relationship('User', foreign_keys=[created_by], backref='created_service_jobs')
-    
-    # --- START: จุดที่แก้ไขใน Class ServiceJob ---
-    parts_used = db.relationship('ServiceJobPart', backref='service_job', lazy='dynamic', cascade="all, delete-orphan")
-    # --- END: จุดที่แก้ไขใน Class ServiceJob ---
-    
-    def generate_job_number(self):
-        """Generate unique job number"""
-        if not self.job_number:
-            import random
-            import string
-            prefix = 'SRV'
-            suffix = ''.join(random.choices(string.digits, k=6))
-            self.job_number = f"{prefix}{suffix}"
-    
-    @property
-    def total_cost(self):
-        """Calculate total cost"""
-        return (self.parts_cost or 0) + (self.labor_cost or 0) + (self.additional_costs or 0)
-    
-    @property
-    def profit_margin(self):
-        """Calculate profit margin"""
-        if self.final_price and self.total_cost:
-            return self.final_price - self.total_cost
-        return 0
-    
-    @property
-    def is_overdue(self):
-        """Check if job is overdue"""
-        if self.promised_date and self.status not in [ServiceJobStatus.COMPLETED, ServiceJobStatus.DELIVERED]:
-            return datetime.now(timezone.utc) > self.promised_date
-        return False
-    
-    def __repr__(self):
-        return f'<ServiceJob {self.job_number}>'
-
-# --- START: Class ใหม่ที่ต้องเพิ่มเข้ามา ---
-class ServiceJobPart(db.Model):
-    """
-    Model to track parts used in a service job.
-    """
-    __tablename__ = 'service_job_part' # ชื่อตาราง
-    id = db.Column(db.Integer, primary_key=True)
-    service_job_id = db.Column(db.Integer, db.ForeignKey('service_job.id'), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
-    quantity = db.Column(db.Integer, nullable=False, default=1)
-    unit_price = db.Column(db.Float, nullable=False) # ราคา ณ วันที่ใช้
-    
-    # Relationships
-    # ไม่ต้องมี backref ที่นี่ เพราะ ServiceJob มี `parts_used` อยู่แล้ว
-    # และ Product ก็จะมี relationship ไปยังตารางนี้
-
-    def __repr__(self):
-        return f'<ServiceJobPart Job:{self.service_job_id} Product:{self.product_id}>'
-# --- END: Class ใหม่ที่ต้องเพิ่มเข้ามา ---
-
 
 class Sale(db.Model):
     """Enhanced Sales model with detailed tracking"""
@@ -704,7 +693,14 @@ class Sale(db.Model):
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     # Relationships
+    customer = db.relationship('Customer', backref='sales')
+    salesperson = db.relationship('User', backref='sales')
     items = db.relationship('SaleItem', backref='sale', lazy='dynamic', cascade='all, delete-orphan')
+
+    def __init__(self, **kwargs):
+        super(Sale, self).__init__(**kwargs)
+        if not self.sale_number:
+            self.sale_number = self.generate_sale_number()
 
     def generate_sale_number(self):
         """Generate unique sale number"""
@@ -714,6 +710,7 @@ class Sale(db.Model):
             prefix = 'SAL'
             suffix = ''.join(random.choices(string.digits, k=6))
             self.sale_number = f"{prefix}{suffix}"
+        return self.sale_number
     
     @property
     def outstanding_amount(self):
@@ -723,8 +720,6 @@ class Sale(db.Model):
     def __repr__(self):
         return f'<Sale {self.sale_number}>'
 
-# --- NEW MODEL: SaleItem ---
-# This model connects a Sale with the Products sold in that sale.
 class SaleItem(db.Model):
     """Model for items within a sale (associates Product with Sale)"""
     __tablename__ = 'sale_item'
@@ -735,13 +730,16 @@ class SaleItem(db.Model):
     
     # Sale details for this item
     quantity = db.Column(db.Integer, nullable=False, default=1)
-    price_per_unit = db.Column(db.Float, nullable=False) # Price at the time of sale
-    cost_per_unit = db.Column(db.Float) # Cost at the time of sale
+    price_per_unit = db.Column(db.Float, nullable=False)
+    cost_per_unit = db.Column(db.Float)
     discount_amount = db.Column(db.Float, default=0.0)
     total_price = db.Column(db.Float, nullable=False)
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    # Relationships
+    product = db.relationship('Product', backref='sale_items')
 
     def __repr__(self):
         return f'<SaleItem for Sale {self.sale_id} - Product {self.product_id}>'
@@ -839,8 +837,9 @@ class Notification(db.Model):
     line_notification = db.Column(db.Boolean, default=False)
     email_notification = db.Column(db.Boolean, default=False)
     
-    # Status
+    # Status - เพิ่ม read property ที่หายไปเพื่อแก้ไขปัญหา
     is_read = db.Column(db.Boolean, default=False)
+    read = db.Column(db.Boolean, default=False)  # alias สำหรับ is_read
     read_at = db.Column(db.DateTime)
     delivered = db.Column(db.Boolean, default=False)
     delivery_attempts = db.Column(db.Integer, default=0)
@@ -855,9 +854,18 @@ class Notification(db.Model):
     # Relationships
     recipient = db.relationship('User', backref='notifications')
     
+    def __init__(self, **kwargs):
+        super(Notification, self).__init__(**kwargs)
+        # Sync read fields for backward compatibility
+        if self.is_read and not self.read:
+            self.read = self.is_read
+        elif self.read and not self.is_read:
+            self.is_read = self.read
+    
     def mark_as_read(self):
         """Mark notification as read"""
         self.is_read = True
+        self.read = True
         self.read_at = datetime.now(timezone.utc)
     
     def __repr__(self):
@@ -879,36 +887,23 @@ def init_default_settings():
     try:
         if SystemSettings.query.count() == 0:
             default_settings = [
-                # Business Settings
                 ('business_name', 'Comphone Service Center', 'string', 'business', 'Company name'),
                 ('business_phone', '02-123-4567', 'string', 'business', 'Business phone number'),
                 ('business_email', 'info@comphone.com', 'string', 'business', 'Business email'),
                 ('business_address', 'Bangkok, Thailand', 'string', 'business', 'Business address'),
-                
-                # Tax Settings
                 ('default_tax_rate', '7.0', 'float', 'finance', 'Default VAT rate (%)'),
                 ('tax_enabled', 'true', 'boolean', 'finance', 'Enable tax calculations'),
-                
-                # System Settings
                 ('default_language', 'th', 'string', 'system', 'Default system language'),
                 ('default_timezone', 'Asia/Bangkok', 'string', 'system', 'Default timezone'),
                 ('session_timeout', '24', 'integer', 'system', 'Session timeout (hours)'),
-                
-                # Notification Settings
                 ('line_notifications_enabled', 'false', 'boolean', 'notifications', 'Enable LINE notifications'),
                 ('email_notifications_enabled', 'false', 'boolean', 'notifications', 'Enable email notifications'),
                 ('overdue_reminder_hours', '24', 'integer', 'notifications', 'Hours before due date to send reminder'),
-                
-                # Integration Settings
                 ('google_sync_enabled', 'false', 'boolean', 'integrations', 'Enable Google Tasks sync'),
                 ('line_bot_enabled', 'false', 'boolean', 'integrations', 'Enable LINE Bot'),
-                
-                # POS Settings
                 ('allow_negative_stock', 'false', 'boolean', 'pos', 'Allow selling when stock is negative'),
                 ('auto_reduce_stock', 'true', 'boolean', 'pos', 'Automatically reduce stock on sale'),
                 ('receipt_footer_text', 'ขอบคุณที่ใช้บริการ', 'string', 'pos', 'Text to show on receipt footer'),
-                
-                # Task Settings
                 ('default_task_priority', 'medium', 'string', 'tasks', 'Default priority for new tasks'),
                 ('auto_assign_tasks', 'false', 'boolean', 'tasks', 'Auto-assign tasks to available technicians'),
                 ('task_reminder_enabled', 'true', 'boolean', 'tasks', 'Enable task reminders'),
@@ -935,12 +930,10 @@ def init_default_settings():
 def create_sample_data():
     """Create sample data for testing"""
     try:
-        # Check if data already exists
         if User.query.count() > 0:
             print("ℹ️  Sample data already exists, skipping...")
             return
         
-        # Create admin user
         admin = User(
             username='admin',
             email='admin@comphone.com',
@@ -953,7 +946,6 @@ def create_sample_data():
         admin.set_password('admin123')
         db.session.add(admin)
         
-        # Create technician user
         tech = User(
             username='technician',
             email='tech@comphone.com',
@@ -969,7 +961,6 @@ def create_sample_data():
         tech.set_skills(['phone_repair', 'computer_repair', 'data_recovery'])
         db.session.add(tech)
         
-        # Create sales user
         sales_user = User(
             username='sales',
             email='sales@comphone.com',
@@ -981,9 +972,8 @@ def create_sample_data():
         sales_user.set_password('sales123')
         db.session.add(sales_user)
         
-        db.session.flush()  # Get IDs for foreign keys
+        db.session.flush()
         
-        # Create sample customers
         customers_data = [
             {
                 'name': 'คุณสมชาย ใจดี',
@@ -1015,7 +1005,6 @@ def create_sample_data():
         
         db.session.flush()
         
-        # Create customer devices
         device1 = CustomerDevice(
             customer_id=customers[0].id,
             device_type='smartphone',
@@ -1023,11 +1012,11 @@ def create_sample_data():
             model='iPhone 13 Pro',
             serial_number='ABC123456789',
             color='Pacific Blue',
-            storage_capacity='256GB'
+            storage_capacity='256GB',
+            created_by=admin.id
         )
         db.session.add(device1)
         
-        # Create sample products
         products_data = [
             {
                 'name': 'ซ่อมหน้าจอ iPhone',
@@ -1073,7 +1062,6 @@ def create_sample_data():
         
         db.session.flush()
         
-        # Create sample service job
         service_job = ServiceJob(
             title='ซ่อมหน้าจอ iPhone 13 Pro',
             description='หน้าจอแตก ต้องการเปลี่ยนใหม่',
@@ -1085,15 +1073,16 @@ def create_sample_data():
             assigned_technician=tech.id,
             created_by=admin.id,
             reported_problem='หน้าจอแตกจากการตก',
+            problem_description='หน้าจอแตกจากการตก',
             estimated_cost=3500.00,
-            promised_date=datetime.now(timezone.utc).replace(hour=17, minute=0, second=0)
+            promised_date=datetime.now(timezone.utc).replace(hour=17, minute=0, second=0),
+            estimated_completion=(datetime.now(timezone.utc) + timedelta(days=1)).date()
         )
-        service_job.generate_job_number()
+        service_job.calculate_total_cost()
         db.session.add(service_job)
         
         db.session.flush()
         
-        # Create sample task
         task = Task(
             title='เปลี่ยนหน้าจอ iPhone 13 Pro',
             description='ถอดหน้าจอเก่าและติดตั้งหน้าจอใหม่',
@@ -1110,7 +1099,6 @@ def create_sample_data():
         task.assignees.append(tech)
         db.session.add(task)
         
-        # Create sample sale with SaleItem
         sale = Sale(
             customer_id=customers[0].id,
             salesperson_id=sales_user.id,
@@ -1122,12 +1110,10 @@ def create_sample_data():
             paid_amount=631.30,
             status='completed'
         )
-        sale.generate_sale_number()
         
-        # Create the associated SaleItem
         sale_item = SaleItem(
-            sale=sale, # Associate with the sale object
-            product_id=products[2].id, # The iPhone case
+            sale=sale,
+            product_id=products[2].id,
             quantity=1,
             price_per_unit=products[2].price,
             cost_per_unit=products[2].cost,
@@ -1137,12 +1123,27 @@ def create_sample_data():
         db.session.add(sale)
         db.session.add(sale_item)
         
+        # เพิ่ม Notification ตัวอย่าง
+        notification = Notification(
+            user_id=tech.id,
+            title='งานใหม่ได้รับมอบหมาย',
+            message=f'คุณได้รับมอบหมายงานซ่อม {service_job.job_number}',
+            notification_type='task_assigned',
+            entity_type='service_job',
+            entity_id=service_job.id,
+            is_read=False,
+            read=False
+        )
+        db.session.add(notification)
+        
         db.session.commit()
         print("✅ Sample data created successfully!")
         
     except Exception as e:
         print(f"❌ Error creating sample data: {e}")
         db.session.rollback()
+        import traceback
+        traceback.print_exc()
 
 # Helper functions
 def get_setting(key, default=None):
@@ -1196,12 +1197,17 @@ def log_activity(action, entity_type=None, entity_id=None, user_id=None,
         print(f"Error logging activity: {e}")
         db.session.rollback()
 
+# Helper function สำหรับ template
+def moment():
+    """Helper function สำหรับ moment.js และ template"""
+    return datetime
+
 # Export all models and functions
 __all__ = [
     'db', 'User', 'Customer', 'CustomerDevice', 'Product', 'Task', 
-    'TaskAttachment', 'TaskComment', 'ServiceJob', 'Sale', 'SaleItem', 
+    'ServiceJob', 'Sale', 'SaleItem', 
     'SystemSettings', 'ActivityLog', 'Notification', 'TaskStatus', 
     'TaskPriority', 'ServiceJobStatus', 'PaymentStatus', 'UserRole',
     'create_tables', 'init_default_settings', 'create_sample_data',
-    'get_setting', 'set_setting', 'log_activity'
+    'get_setting', 'set_setting', 'log_activity', 'moment'
 ]

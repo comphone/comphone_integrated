@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายละเอียดงาน #{{ job.id }} - Comphone Service Center</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #3498db 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: none;
+            margin-bottom: 2rem;
+        }
+
+        .info-card .card-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.5rem;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending { background-color: #fff3cd; color: #856404; }
+        .status-in-progress { background-color: #cce5ff; color: #004085; }
+        .status-completed { background-color: #d4edda; color: #155724; }
+        .status-cancelled { background-color: #f8d7da; color: #721c24; }
+
+        .info-row {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            color: #6c757d;
+            margin-bottom: 0;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.75rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #dee2e6;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.25rem;
+            top: 0.25rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px var(--secondary-color);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #2980b9 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 0.5rem 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .progress-container {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .cost-summary {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <!-- Back Button -->
+        <div class="mb-3">
+            <a href="{{ url_for('service_jobs') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> กลับสู่รายการงาน
+            </a>
+        </div>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-2"><i class="fas fa-tools"></i> งานบริการ #{{ job.id }}</h1>
+                    <p class="mb-0">รายละเอียดงานซ่อมแซมและบริการ</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    {% set status_class = {
+                        'pending': 'status-pending',
+                        'in_progress': 'status-in-progress', 
+                        'completed': 'status-completed',
+                        'cancelled': 'status-cancelled'
+                    } %}
+                    {% set status_text = {
+                        'pending': 'รอดำเนินการ',
+                        'in_progress': 'กำลังดำเนินการ',
+                        'completed': 'เสร็จสิ้น', 
+                        'cancelled': 'ยกเลิก'
+                    } %}
+                    <span class="status-badge {{ status_class.get(job.status.value if job.status else 'pending', 'status-pending') }}">
+                        {{ status_text.get(job.status.value if job.status else 'pending', 'รอดำเนินการ') }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Customer & Device Info -->
+                <div class="info-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-user"></i> ข้อมูลลูกค้าและอุปกรณ์</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-row">
+                                    <div class="info-label">ชื่อลูกค้า</div>
+                                    <div class="info-value">{{ job.customer.name }}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">เบอร์โทร</div>
+                                    <div class="info-value">{{ job.customer.phone }}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">อีเมล</div>
+                                    <div class="info-value">{{ job.customer.email or '-' }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-row">
+                                    <div class="info-label">ประเภทอุปกรณ์</div>
+                                    <div class="info-value">{{ job.device.device_type }}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">ยี่ห้อและรุ่น</div>
+                                    <div class="info-value">{{ job.device.brand }} {{ job.device.model }}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Serial Number</div>
+                                    <div class="info-value">{{ job.device.serial_number or '-' }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Problem Description -->
+                <div class="info-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> รายละเอียดปัญหา</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0">{{ job.problem_description }}</p>
+                    </div>
+                </div>
+
+                <!-- Service Timeline -->
+                <div class="info-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-history"></i> ประวัติการดำเนินงาน</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <h6 class="mb-1">รับงานเข้าระบบ</h6>
+                                <p class="text-muted mb-0">{{ job.created_at.strftime('%d/%m/%Y %H:%M') if job.created_at else '-' }}</p>
+                            </div>
+                            
+                            {% if job.assigned_technician %}
+                            <div class="timeline-item">
+                                <h6 class="mb-1">มอบหมายช่างเทคนิค</h6>
+                                <p class="text-muted mb-0">ช่าง: {{ job.assigned_technician.username }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if job.status.value == 'in_progress' %}
+                            <div class="timeline-item">
+                                <h6 class="mb-1">เริ่มดำเนินการซ่อม</h6>
+                                <p class="text-muted mb-0">งานอยู่ระหว่างการดำเนินการ</p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if job.completed_at %}
+                            <div class="timeline-item">
+                                <h6 class="mb-1">งานเสร็จสิ้น</h6>
+                                <p class="text-muted mb-0">{{ job.completed_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                {% if job.notes %}
+                <div class="info-card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-sticky-note"></i> หมายเหตุ</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0">{{ job.notes }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-4">
+                <!-- Progress -->
+                <div class="progress-container mb-4">
+                    <h6 class="mb-3"><i class="fas fa-tasks"></i> ความคืบหน้า</h6>
+                    {% set progress = {
+                        'pending': 25,
+                        'in_progress': 75,
+                        'completed': 100,
+                        'cancelled': 0
+                    } %}
+                    {% set progress_color = {
+                        'pending': 'warning',
+                        'in_progress': 'info',
+                        'completed': 'success',
+                        'cancelled': 'danger'
+                    } %}
+                    <div class="progress mb-2" style="height: 10px;">
+                        <div class="progress-bar bg-{{ progress_color.get(job.status.value, 'warning') }}" 
+                             style="width: {{ progress.get(job.status.value, 25) }}%"></div>
+                    </div>
+                    <small class="text-muted">{{ progress.get(job.status.value, 25) }}% เสร็จสิ้น</small>
+                </div>
+
+                <!-- Job Details -->
+                <div class="info-card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-info-circle"></i> รายละเอียดงาน</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-row">
+                            <div class="info-label">ช่างเทคนิค</div>
+                            <div class="info-value">
+                                {% if job.assigned_technician %}
+                                    <span class="badge bg-info">{{ job.assigned_technician.username }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">ยังไม่มอบหมาย</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">วันที่รับงาน</div>
+                            <div class="info-value">{{ job.created_at.strftime('%d/%m/%Y') if job.created_at else '-' }}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">วันที่คาดว่าเสร็จ</div>
+                            <div class="info-value">{{ job.expected_completion_date.strftime('%d/%m/%Y') if job.expected_completion_date else '-' }}</div>
+                        </div>
+                        {% if job.completed_at %}
+                        <div class="info-row">
+                            <div class="info-label">วันที่เสร็จจริง</div>
+                            <div class="info-value">{{ job.completed_at.strftime('%d/%m/%Y') }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Cost Summary -->
+                <div class="cost-summary">
+                    <h6 class="mb-3"><i class="fas fa-calculator"></i> สรุปค่าใช้จ่าย</h6>
+                    <div class="info-row">
+                        <div class="info-label">ราคาประเมิน</div>
+                        <div class="info-value text-info">฿{{ "{:,.2f}".format(job.estimated_cost or 0) }}</div>
+                    </div>
+                    {% if job.actual_cost %}
+                    <div class="info-row">
+                        <div class="info-label">ราคาจริง</div>
+                        <div class="info-value text-success">฿{{ "{:,.2f}".format(job.actual_cost) }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2 mt-4">
+                    <a href="{{ url_for('edit_service_job', job_id=job.id) }}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> แก้ไขงาน
+                    </a>
+                    {% if current_user.role.value == 'admin' and job.status.value != 'completed' %}
+                    <button class="btn btn-outline-danger" onclick="deleteJob({{ job.id }})">
+                        <i class="fas fa-trash"></i> ลบงาน
+                    </button>
+                    {% endif %}
+                    <a href="{{ url_for('service_jobs') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list"></i> ดูงานทั้งหมด
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function deleteJob(jobId) {
+            if (confirm('คุณแน่ใจหรือไม่ที่จะลบงานนี้? การกระทำนี้ไม่สามารถยกเลิกได้')) {
+                fetch(`/service-jobs/${jobId}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('ลบงานเรียบร้อยแล้ว');
+                        window.location.href = '{{ url_for("service_jobs") }}';
+                    } else {
+                        alert('เกิดข้อผิดพลาด: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+                });
+            }
+        }
+    </script>
+</body>
+</html>

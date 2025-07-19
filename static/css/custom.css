@@ -1,0 +1,72 @@
+/* Comphone Integrated System Custom Styles */
+
+.dashboard-card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    font-size: 2rem;
+    opacity: 0.8;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+
+.quick-action-btn {
+    border-radius: 15px;
+    padding: 10px 20px;
+    margin: 5px;
+}
+
+.timeline-item {
+    border-left: 2px solid #007bff;
+    padding-left: 15px;
+    margin-bottom: 15px;
+}
+
+.error-template {
+    padding: 40px 15px;
+}
+
+.error-template h1 {
+    font-size: 100px;
+    color: #007bff;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.error-details {
+    margin: 20px 0;
+    color: #666;
+}
+
+.error-actions {
+    margin-top: 30px;
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .quick-action-btn {
+        margin: 2px 0;
+    }
+    
+    .stat-icon {
+        font-size: 1.5rem;
+    }
+}

@@ -1,58 +1,103 @@
-"""
-Comphone Integrated System - Complete Auth Blueprint
-User authentication with all required routes
-"""
-
-from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
-from datetime import datetime, timezone
-from models import db, User, UserRole, log_activity
-import re
+from werkzeug.security import check_password_hash, generate_password_hash
+from models import User, db, ActivityLog
+import logging
 
-auth_bp = Blueprint('auth', __name__)
+auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """User login"""
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
-    
+        
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
-        
-        if not username or not password:
-            flash('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน', 'error')
-            return render_template('auth/login.html')
-        
-        # Find user
-        user = User.query.filter(
-            (User.username == username) | (User.email == username)
-        ).first()
-        
-        if user and user.check_password(password):
-            if not user.is_active:
-                flash('บัญชีผู้ใช้ถูกระงับการใช้งาน', 'error')
+        try:
+            username = request.form.get('username')
+            password = request.form.get('password')
+            remember = bool(request.form.get('remember'))
+            
+            if not username or not password:
+                flash('Username and password are required', 'error')
                 return render_template('auth/login.html')
             
-            # Successful login
-            login_user(user, remember=bool(request.form.get('remember_me')))
+            user = User.query.filter_by(username=username).first()
             
-            # Update last login
-            user.last_login = datetime.now(timezone.utc)
-            user.last_activity = datetime.now(timezone.utc)
-            db.session.commit()
-            
-            flash(f'ยินดีต้อนรับ {user.full_name}', 'success')
-            
-            # Redirect to intended page or dashboard
-            next_page = request.args.get('next')
-            if not next_page:
-                next_page = url_for('main.dashboard')
-            
-            return redirect(next_page)
-        else:
-            flash('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 'error')
+            if user and check_password_hash(user.password_hash, password):
+                # Check if user is active (use different field names)
+                is_active = True  # Default to active
+                if hasattr(user, 'active'):
+                    is_active = user.active
+                elif hasattr(user, 'is_active'):
+                    is_active = user.is_active
+                elif hasattr(user, 'status'):
+                    is_active = user.status == 'active'
+                
+                if not is_active:
+                    flash('Your account has been deactivated', 'error')
+                    return render_template('auth/login.html')
+                
+                login_user(user, remember=remember)
+                
+                # Log successful login (safe method)
+                try:
+                    if hasattr(ActivityLog, 'log_activity'):
+                        ActivityLog.log_activity(
+                            user_id=user.id,
+                            action='login',
+                            description=f'User {username} logged in successfully'
+                        )
+                    else:
+                        # Create activity log manually
+                        activity = ActivityLog(
+                            user_id=user.id,
+                            action='login',
+                            description=f'User {username} logged in successfully'
+                        )
+                        db.session.add(activity)
+                        db.session.commit()
+                except Exception as log_error:
+                    logging.error(f"Error logging activity: {str(log_error)}")
+                
+                # Update last login (safe method)
+                try:
+                    if hasattr(user, 'update_last_login'):
+                        user.update_last_login()
+                    elif hasattr(user, 'last_login'):
+                        from datetime import datetime
+                        user.last_login = datetime.utcnow()
+                        db.session.commit()
+                except Exception as update_error:
+                    logging.error(f"Error updating last login: {str(update_error)}")
+                
+                next_page = request.args.get('next')
+                if next_page:
+                    return redirect(next_page)
+                return redirect(url_for('main.dashboard'))
+            else:
+                # Log failed login attempt (safe method)
+                try:
+                    if hasattr(ActivityLog, 'log_activity'):
+                        ActivityLog.log_activity(
+                            action='login_failed',
+                            description=f'Failed login attempt for username: {username}'
+                        )
+                    else:
+                        activity = ActivityLog(
+                            action='login_failed',
+                            description=f'Failed login attempt for username: {username}'
+                        )
+                        db.session.add(activity)
+                        db.session.commit()
+                except Exception as log_error:
+                    logging.error(f"Error logging failed login: {str(log_error)}")
+                
+                flash('Invalid username or password', 'error')
+                
+        except Exception as e:
+            logging.error(f"Login error: {str(e)}")
+            flash('An error occurred during login', 'error')
     
     return render_template('auth/login.html')
 
@@ -60,383 +105,331 @@ def login():
 @login_required
 def logout():
     """User logout"""
-    flash('ออกจากระบบเรียบร้อยแล้ว', 'info')
-    logout_user()
+    try:
+        # Log logout activity (safe method)
+        try:
+            if hasattr(ActivityLog, 'log_activity'):
+                ActivityLog.log_activity(
+                    user_id=current_user.id,
+                    action='logout',
+                    description=f'User {current_user.username} logged out'
+                )
+            else:
+                activity = ActivityLog(
+                    user_id=current_user.id,
+                    action='logout',
+                    description=f'User {current_user.username} logged out'
+                )
+                db.session.add(activity)
+                db.session.commit()
+        except Exception as log_error:
+            logging.error(f"Error logging logout: {str(log_error)}")
+        
+        logout_user()
+        flash('You have been logged out successfully', 'info')
+    except Exception as e:
+        logging.error(f"Logout error: {str(e)}")
+        flash('An error occurred during logout', 'error')
+    
     return redirect(url_for('auth.login'))
 
 @auth_bp.route('/profile')
 @login_required
 def profile():
     """User profile page"""
-    return render_template('auth/profile.html', user=current_user)
-
-@auth_bp.route('/profile/update', methods=['POST'])
-@login_required
-def update_profile():
-    """Update user profile"""
     try:
-        # Update basic information
-        current_user.first_name = request.form.get('first_name', '').strip()
-        current_user.last_name = request.form.get('last_name', '').strip()
-        current_user.phone = request.form.get('phone', '').strip()
-        current_user.email = request.form.get('email', '').strip()
+        # Get recent activities for this user (safe method)
+        recent_activities = []
+        try:
+            recent_activities = ActivityLog.query.filter_by(
+                user_id=current_user.id
+            ).order_by(ActivityLog.created_at.desc()).limit(10).all()
+        except Exception as activity_error:
+            logging.error(f"Error getting activities: {str(activity_error)}")
         
-        # Update preferences
-        current_user.timezone = request.form.get('timezone', 'Asia/Bangkok')
-        current_user.language = request.form.get('language', 'th')
-        current_user.theme_preference = request.form.get('theme', 'light')
-        
-        # Update technician-specific information
-        if current_user.is_technician:
-            skills = []
-            for skill in ['phone_repair', 'computer_repair', 'data_recovery', 'network_setup', 'software_install']:
-                if request.form.get(f'skill_{skill}'):
-                    skills.append(skill)
-            current_user.set_skills(skills)
-        
-        current_user.updated_at = datetime.now(timezone.utc)
-        db.session.commit()
-        
-        flash('อัปเดตข้อมูลส่วนตัวเรียบร้อยแล้ว', 'success')
-        
+        return render_template('auth/profile.html',
+                             user=current_user,
+                             recent_activities=recent_activities)
     except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(f"Profile update error: {e}")
-        flash('เกิดข้อผิดพลาดในการอัปเดตข้อมูล', 'error')
-    
-    return redirect(url_for('auth.profile'))
+        logging.error(f"Profile error: {str(e)}")
+        flash('Error loading profile', 'error')
+        return redirect(url_for('main.dashboard'))
 
 @auth_bp.route('/change_password', methods=['GET', 'POST'])
 @login_required
 def change_password():
     """Change user password"""
     if request.method == 'POST':
-        current_password = request.form.get('current_password', '')
-        new_password = request.form.get('new_password', '')
-        confirm_password = request.form.get('confirm_password', '')
-        
-        # Validate input
-        if not current_password:
-            flash('กรุณาระบุรหัสผ่านปัจจุบัน', 'error')
-            return render_template('auth/change_password.html')
-        
-        if not current_user.check_password(current_password):
-            flash('รหัสผ่านปัจจุบันไม่ถูกต้อง', 'error')
-            return render_template('auth/change_password.html')
-        
-        if not new_password or len(new_password) < 6:
-            flash('รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร', 'error')
-            return render_template('auth/change_password.html')
-        
-        if new_password != confirm_password:
-            flash('รหัสผ่านใหม่ไม่ตรงกัน', 'error')
-            return render_template('auth/change_password.html')
-        
-        if current_password == new_password:
-            flash('รหัสผ่านใหม่ต้องแตกต่างจากรหัสผ่านเดิม', 'error')
-            return render_template('auth/change_password.html')
-        
         try:
+            current_password = request.form.get('current_password')
+            new_password = request.form.get('new_password')
+            confirm_password = request.form.get('confirm_password')
+            
+            # Validation
+            if not all([current_password, new_password, confirm_password]):
+                flash('All fields are required', 'error')
+                return render_template('auth/change_password.html')
+            
+            if not check_password_hash(current_user.password_hash, current_password):
+                flash('Current password is incorrect', 'error')
+                return render_template('auth/change_password.html')
+            
+            if new_password != confirm_password:
+                flash('New passwords do not match', 'error')
+                return render_template('auth/change_password.html')
+            
+            if len(new_password) < 6:
+                flash('Password must be at least 6 characters long', 'error')
+                return render_template('auth/change_password.html')
+            
             # Update password
-            current_user.set_password(new_password)
-            current_user.updated_at = datetime.now(timezone.utc)
+            current_user.password_hash = generate_password_hash(new_password)
             db.session.commit()
             
-            flash('เปลี่ยนรหัสผ่านเรียบร้อยแล้ว', 'success')
+            # Log password change (safe method)
+            try:
+                if hasattr(ActivityLog, 'log_activity'):
+                    ActivityLog.log_activity(
+                        user_id=current_user.id,
+                        action='password_changed',
+                        description='User changed their password'
+                    )
+                else:
+                    activity = ActivityLog(
+                        user_id=current_user.id,
+                        action='password_changed',
+                        description='User changed their password'
+                    )
+                    db.session.add(activity)
+                    db.session.commit()
+            except Exception as log_error:
+                logging.error(f"Error logging password change: {str(log_error)}")
+            
+            flash('Password changed successfully', 'success')
             return redirect(url_for('auth.profile'))
-        
+            
         except Exception as e:
+            logging.error(f"Change password error: {str(e)}")
             db.session.rollback()
-            current_app.logger.error(f"Password change error: {e}")
-            flash('เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน', 'error')
+            flash('An error occurred while changing password', 'error')
     
     return render_template('auth/change_password.html')
 
-@auth_bp.route('/users')
+@auth_bp.route('/update_profile', methods=['POST'])
 @login_required
-def manage_users():
-    """User management (admin only)"""
-    if not current_user.is_admin:
-        flash('คุณไม่มีสิทธิ์เข้าถึงหน้านี้', 'error')
-        return redirect(url_for('main.dashboard'))
-    
-    page = request.args.get('page', 1, type=int)
-    search = request.args.get('search', '').strip()
-    role_filter = request.args.get('role', '')
-    status_filter = request.args.get('status', '')
-    
-    # Build query
-    query = User.query
-    
-    if search:
-        query = query.filter(
-            db.or_(
-                User.username.contains(search),
-                User.email.contains(search),
-                User.first_name.contains(search),
-                User.last_name.contains(search)
-            )
-        )
-    
-    if role_filter:
-        try:
-            role_enum = UserRole(role_filter)
-            query = query.filter(User.role == role_enum)
-        except ValueError:
-            pass
-    
-    if status_filter == 'active':
-        query = query.filter(User.is_active == True)
-    elif status_filter == 'inactive':
-        query = query.filter(User.is_active == False)
-    
-    # Get all users for now (pagination can be added later)
-    users = query.order_by(User.created_at.desc()).all()
-    
-    return render_template('auth/manage_users.html',
-                         users=users,
-                         search=search,
-                         role_filter=role_filter,
-                         status_filter=status_filter,
-                         user_roles=UserRole)
-
-@auth_bp.route('/users/<int:user_id>/toggle_status', methods=['POST'])
-@login_required
-def toggle_user_status(user_id):
-    """Toggle user active status (admin only)"""
-    if not current_user.is_admin:
-        flash('คุณไม่มีสิทธิ์ดำเนินการนี้', 'error')
-        return redirect(url_for('main.dashboard'))
-    
-    user = User.query.get_or_404(user_id)
-    
-    if user.id == current_user.id:
-        flash('ไม่สามารถเปลี่ยนสถานะตัวเองได้', 'error')
-        return redirect(url_for('auth.manage_users'))
-    
+def update_profile():
+    """Update user profile information"""
     try:
-        old_status = user.is_active
-        user.is_active = not user.is_active
-        user.updated_at = datetime.now(timezone.utc)
-        db.session.commit()
-        
-        status_text = 'เปิดใช้งาน' if user.is_active else 'ปิดใช้งาน'
-        flash(f'{status_text}บัญชีผู้ใช้ {user.username} เรียบร้อยแล้ว', 'success')
-        
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(f"Toggle user status error: {e}")
-        flash('เกิดข้อผิดพลาดในการเปลี่ยนสถานะผู้ใช้', 'error')
-    
-    return redirect(url_for('auth.manage_users'))
-
-@auth_bp.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
-@login_required
-def edit_user(user_id):
-    """Edit user (admin only)"""
-    if not current_user.is_admin:
-        flash('คุณไม่มีสิทธิ์เข้าถึงหน้านี้', 'error')
-        return redirect(url_for('main.dashboard'))
-    
-    user = User.query.get_or_404(user_id)
-    
-    if request.method == 'POST':
-        try:
-            # Update user information
-            username = request.form.get('username', '').strip().lower()
-            email = request.form.get('email', '').strip().lower()
-            first_name = request.form.get('first_name', '').strip()
-            last_name = request.form.get('last_name', '').strip()
-            phone = request.form.get('phone', '').strip()
-            role = request.form.get('role', 'support')
-            department = request.form.get('department', '').strip()
-            
-            # Validate input
-            errors = []
-            
-            if not username or len(username) < 3:
-                errors.append('ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร')
-            
-            if username != user.username and User.query.filter_by(username=username).first():
-                errors.append('ชื่อผู้ใช้นี้ถูกใช้งานแล้ว')
-            
-            if not email or not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
-                errors.append('อีเมลไม่ถูกต้อง')
-            
-            if email != user.email and User.query.filter_by(email=email).first():
-                errors.append('อีเมลนี้ถูกใช้งานแล้ว')
-            
-            if not first_name:
-                errors.append('กรุณาระบุชื่อ')
-            
-            if not last_name:
-                errors.append('กรุณาระบุนามสกุล')
-            
-            try:
-                user_role = UserRole(role)
-            except ValueError:
-                errors.append('บทบาทผู้ใช้ไม่ถูกต้อง')
-                user_role = user.role
-            
-            if errors:
-                for error in errors:
-                    flash(error, 'error')
-                return render_template('auth/edit_user.html', user=user, user_roles=UserRole)
-            
-            # Update user fields
-            user.username = username
-            user.email = email
-            user.first_name = first_name
-            user.last_name = last_name
-            user.phone = phone
-            user.role = user_role
-            user.department = department
-            user.is_technician = (user_role == UserRole.TECHNICIAN)
-            user.updated_at = datetime.now(timezone.utc)
-            
-            # Update password if provided
-            new_password = request.form.get('new_password', '').strip()
-            if new_password:
-                if len(new_password) < 6:
-                    flash('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร', 'error')
-                    return render_template('auth/edit_user.html', user=user, user_roles=UserRole)
-                user.set_password(new_password)
-            
-            db.session.commit()
-            
-            flash(f'อัปเดตข้อมูลผู้ใช้ {user.username} เรียบร้อยแล้ว', 'success')
-            return redirect(url_for('auth.manage_users'))
-        
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"Edit user error: {e}")
-            flash('เกิดข้อผิดพลาดในการอัปเดตข้อมูลผู้ใช้', 'error')
-    
-    return render_template('auth/edit_user.html', user=user, user_roles=UserRole)
-
-@auth_bp.route('/register', methods=['GET', 'POST'])
-@login_required
-def register():
-    """User registration (admin only)"""
-    if not current_user.is_admin:
-        flash('คุณไม่มีสิทธิ์เข้าถึงหน้านี้', 'error')
-        return redirect(url_for('main.dashboard'))
-    
-    if request.method == 'POST':
-        # Get form data
-        username = request.form.get('username', '').strip().lower()
-        email = request.form.get('email', '').strip().lower()
-        password = request.form.get('password', '')
-        confirm_password = request.form.get('confirm_password', '')
         first_name = request.form.get('first_name', '').strip()
         last_name = request.form.get('last_name', '').strip()
+        email = request.form.get('email', '').strip()
         phone = request.form.get('phone', '').strip()
-        role = request.form.get('role', 'support')
-        department = request.form.get('department', '').strip()
         
-        # Validate input
-        errors = []
+        # Validation
+        if not first_name or not last_name:
+            flash('First name and last name are required', 'error')
+            return redirect(url_for('auth.profile'))
         
-        if not username or len(username) < 3:
-            errors.append('ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร')
+        if email and '@' not in email:
+            flash('Please enter a valid email address', 'error')
+            return redirect(url_for('auth.profile'))
         
-        if not re.match(r'^[a-zA-Z0-9_]+$', username):
-            errors.append('ชื่อผู้ใช้ใช้ได้เฉพาะตัวอักษร ตัวเลข และ _')
+        # Check if email is already taken by another user
+        if email and hasattr(current_user, 'email') and email != current_user.email:
+            existing_user = User.query.filter_by(email=email).first()
+            if existing_user:
+                flash('Email address is already in use', 'error')
+                return redirect(url_for('auth.profile'))
         
-        if User.query.filter_by(username=username).first():
-            errors.append('ชื่อผู้ใช้นี้ถูกใช้งานแล้ว')
+        # Update user information (safe field assignment)
+        if hasattr(current_user, 'first_name'):
+            current_user.first_name = first_name
+        if hasattr(current_user, 'last_name'):
+            current_user.last_name = last_name
+        if hasattr(current_user, 'email'):
+            current_user.email = email
+        if hasattr(current_user, 'phone'):
+            current_user.phone = phone
         
-        if not email or not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
-            errors.append('อีเมลไม่ถูกต้อง')
+        db.session.commit()
         
-        if User.query.filter_by(email=email).first():
-            errors.append('อีเมลนี้ถูกใช้งานแล้ว')
-        
-        if not password or len(password) < 6:
-            errors.append('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร')
-        
-        if password != confirm_password:
-            errors.append('รหัสผ่านไม่ตรงกัน')
-        
-        if not first_name:
-            errors.append('กรุณาระบุชื่อ')
-        
-        if not last_name:
-            errors.append('กรุณาระบุนามสกุล')
-        
+        # Log profile update (safe method)
         try:
-            user_role = UserRole(role)
-        except ValueError:
-            errors.append('บทบาทผู้ใช้ไม่ถูกต้อง')
-            user_role = UserRole.SUPPORT
+            if hasattr(ActivityLog, 'log_activity'):
+                ActivityLog.log_activity(
+                    user_id=current_user.id,
+                    action='profile_updated',
+                    description='User updated their profile information'
+                )
+            else:
+                activity = ActivityLog(
+                    user_id=current_user.id,
+                    action='profile_updated',
+                    description='User updated their profile information'
+                )
+                db.session.add(activity)
+                db.session.commit()
+        except Exception as log_error:
+            logging.error(f"Error logging profile update: {str(log_error)}")
         
-        if errors:
-            for error in errors:
-                flash(error, 'error')
-            return render_template('auth/register.html', user_roles=UserRole)
+        flash('Profile updated successfully', 'success')
         
+    except Exception as e:
+        logging.error(f"Update profile error: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while updating profile', 'error')
+    
+    return redirect(url_for('auth.profile'))
+
+@auth_bp.route('/register', methods=['GET', 'POST'])
+def register():
+    """User registration (Admin only in production)"""
+    if request.method == 'POST':
         try:
-            # Create new user
-            user = User(
-                username=username,
-                email=email,
-                first_name=first_name,
-                last_name=last_name,
-                phone=phone,
-                role=user_role,
-                department=department,
-                is_technician=(user_role == UserRole.TECHNICIAN)
-            )
-            user.set_password(password)
+            username = request.form.get('username', '').strip()
+            email = request.form.get('email', '').strip()
+            password = request.form.get('password')
+            confirm_password = request.form.get('confirm_password')
+            first_name = request.form.get('first_name', '').strip()
+            last_name = request.form.get('last_name', '').strip()
+            role = request.form.get('role', 'employee')
+            
+            # Validation
+            if not all([username, email, password, confirm_password, first_name, last_name]):
+                flash('All fields are required', 'error')
+                return render_template('auth/register.html')
+            
+            if password != confirm_password:
+                flash('Passwords do not match', 'error')
+                return render_template('auth/register.html')
+            
+            if len(password) < 6:
+                flash('Password must be at least 6 characters long', 'error')
+                return render_template('auth/register.html')
+            
+            # Check if username or email already exists
+            if User.query.filter_by(username=username).first():
+                flash('Username already exists', 'error')
+                return render_template('auth/register.html')
+            
+            if User.query.filter_by(email=email).first():
+                flash('Email already exists', 'error')
+                return render_template('auth/register.html')
+            
+            # Create new user with safe field assignment
+            user_data = {
+                'username': username,
+                'password_hash': generate_password_hash(password),
+                'role': role
+            }
+            
+            # Add optional fields if they exist in the model
+            if hasattr(User, 'email'):
+                user_data['email'] = email
+            if hasattr(User, 'first_name'):
+                user_data['first_name'] = first_name
+            if hasattr(User, 'last_name'):
+                user_data['last_name'] = last_name
+            if hasattr(User, 'active'):
+                user_data['active'] = True
+            elif hasattr(User, 'is_active'):
+                user_data['is_active'] = True
+            elif hasattr(User, 'status'):
+                user_data['status'] = 'active'
+            
+            user = User(**user_data)
             
             db.session.add(user)
             db.session.commit()
             
-            flash(f'สร้างบัญชีผู้ใช้ {username} เรียบร้อยแล้ว', 'success')
-            return redirect(url_for('auth.manage_users'))
-        
+            # Log user registration (safe method)
+            try:
+                if hasattr(ActivityLog, 'log_activity'):
+                    ActivityLog.log_activity(
+                        action='user_registered',
+                        description=f'New user registered: {username}'
+                    )
+                else:
+                    activity = ActivityLog(
+                        action='user_registered',
+                        description=f'New user registered: {username}'
+                    )
+                    db.session.add(activity)
+                    db.session.commit()
+            except Exception as log_error:
+                logging.error(f"Error logging registration: {str(log_error)}")
+            
+            flash('Registration successful! Please log in.', 'success')
+            return redirect(url_for('auth.login'))
+            
         except Exception as e:
+            logging.error(f"Registration error: {str(e)}")
             db.session.rollback()
-            current_app.logger.error(f"User registration error: {e}")
-            flash('เกิดข้อผิดพลาดในการสร้างบัญชีผู้ใช้', 'error')
+            flash('An error occurred during registration', 'error')
     
-    return render_template('auth/register.html', user_roles=UserRole)
+    return render_template('auth/register.html')
 
-@auth_bp.route('/sessions')
+@auth_bp.route('/manage_users')
 @login_required
-def active_sessions():
-    """View active sessions"""
-    session_info = {
-        'current_session': {
-            'ip': request.remote_addr,
-            'user_agent': request.headers.get('User-Agent'),
-            'login_time': current_user.last_login,
-            'last_activity': current_user.last_activity
+def manage_users():
+    """User management page (Admin only)"""
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('main.dashboard'))
+    
+    try:
+        users = User.query.order_by(User.created_at.desc()).all()
+        return render_template('auth/manage_users.html', users=users)
+    except Exception as e:
+        logging.error(f"Manage users error: {str(e)}")
+        flash('Error loading users', 'error')
+        return redirect(url_for('main.dashboard'))
+
+# API Endpoints
+@auth_bp.route('/api/check_session')
+@login_required
+def check_session():
+    """Check if user session is valid"""
+    return jsonify({
+        'status': 'success',
+        'user': {
+            'id': current_user.id,
+            'username': current_user.username,
+            'role': current_user.role,
+            'full_name': getattr(current_user, 'first_name', current_user.username)
         }
-    }
-    
-    return render_template('auth/sessions.html', session_info=session_info)
+    })
 
-# Helper functions
-def get_user_stats(user):
-    """Get user statistics"""
-    if not user:
-        return {}
-    
-    stats = {
-        'total_tasks_created': 0,
-        'total_tasks_assigned': 0,
-        'completed_tasks': 0,
-        'pending_tasks': 0
+@auth_bp.route('/api/user_info')
+@login_required
+def user_info():
+    """Get current user information"""
+    user_dict = {
+        'id': current_user.id,
+        'username': current_user.username,
+        'role': current_user.role
     }
     
-    return stats
+    # Add optional fields safely
+    for field in ['first_name', 'last_name', 'email', 'phone', 'active', 'is_active', 'status']:
+        if hasattr(current_user, field):
+            user_dict[field] = getattr(current_user, field)
+    
+    return jsonify({
+        'status': 'success',
+        'user': user_dict
+    })
 
-# Template context processor
-@auth_bp.app_context_processor
-def inject_auth_vars():
-    """Inject authentication-related variables into templates"""
-    return {
-        'UserRole': UserRole,
-        'get_user_stats': get_user_stats
-    }
+# Error handlers for auth blueprint
+@auth_bp.errorhandler(404)
+def not_found(error):
+    return render_template('errors/404.html'), 404
+
+@auth_bp.errorhandler(403)
+def forbidden(error):
+    return render_template('errors/403.html'), 403
+
+@auth_bp.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('errors/500.html'), 500

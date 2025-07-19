@@ -1,84 +1,379 @@
-<!-- ============================================================================ -->
-<!-- templates/main/dashboard.html -->
-<!-- ============================================================================ -->
 {% extends "base.html" %}
-{% block title %}แดชบอร์ด - {{ business_name }}{% endblock %}
+
+{% block title %}หน้าหลัก - Comphone Service Management{% endblock %}
+
+{% block page_title %}หน้าหลัก{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3">แดชบอร์ด</h1>
-    <span class="text-muted">{{ moment().format('DD/MM/YYYY') if moment else 'วันนี้' }}</span>
-</div>
-
+<!-- Welcome Section -->
 <div class="row mb-4">
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stats-card">
-            <div class="stats-number">{{ stats.total_customers or 0 }}</div>
-            <div class="stats-label">ลูกค้าทั้งหมด</div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stats-card bg-success">
-            <div class="stats-number">{{ stats.total_tasks or 0 }}</div>
-            <div class="stats-label">งานทั้งหมด</div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stats-card bg-warning">
-            <div class="stats-number">{{ stats.total_service_jobs or 0 }}</div>
-            <div class="stats-label">งานซ่อม</div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stats-card bg-info">
-            <div class="stats-number">{{ stats.total_products or 0 }}</div>
-            <div class="stats-label">สินค้า</div>
+    <div class="col-12">
+        <div class="card" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; border: none;">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h3 class="mb-2">สวัสดี {{ current_user.username }}! 👋</h3>
+                        <p class="mb-0 opacity-75">ยินดีต้อนรับสู่ระบบบริหารจัดการศูนย์บริการมือถือ Comphone</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <h5 class="mb-1">{{ now().strftime('%d/%m/%Y') }}</h5>
+                        <p class="mb-0 opacity-75">{{ now().strftime('%H:%M น.') }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">การดำเนินการด่วน</h5>
-            </div>
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #3b82f6 !important;">
             <div class="card-body">
-                <div class="d-grid gap-2">
-                    <button class="btn btn-primary" onclick="quickAddTask()">
-                        <i class="fas fa-plus me-2"></i>เพิ่มงานใหม่
-                    </button>
-                    <a href="{{ url_for('customers.add_customer') }}" class="btn btn-success">
-                        <i class="fas fa-user-plus me-2"></i>เพิ่มลูกค้าใหม่
-                    </a>
-                    <a href="{{ url_for('pos.index') }}" class="btn btn-warning">
-                        <i class="fas fa-cash-register me-2"></i>ระบบขาย
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="p-3 rounded-circle" style="background-color: rgba(59, 130, 246, 0.1);">
+                            <i class="fas fa-users fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="row">
+                            <div class="col">
+                                <h2 class="mb-1 fw-bold text-primary">{{ total_customers or 0 }}</h2>
+                                <p class="mb-0 text-muted small">ลูกค้าทั้งหมด</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <a href="{{ url_for('customers') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-eye me-1"></i>ดูรายละเอียด
                     </a>
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">ลูกค้าล่าสุด</h5>
-            </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #10b981 !important;">
             <div class="card-body">
-                {% if recent_customers %}
-                    {% for customer in recent_customers %}
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div>
-                            <strong>{{ customer.name }}</strong><br>
-                            <small class="text-muted">{{ customer.phone or 'ไม่มีเบอร์โทร' }}</small>
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="p-3 rounded-circle" style="background-color: rgba(16, 185, 129, 0.1);">
+                            <i class="fas fa-tools fa-2x text-success"></i>
                         </div>
-                        <small class="text-muted">ใหม่</small>
                     </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-muted mb-0">ยังไม่มีลูกค้า</p>
-                {% endif %}
+                    <div class="flex-grow-1 ms-3">
+                        <div class="row">
+                            <div class="col">
+                                <h2 class="mb-1 fw-bold text-success">{{ total_service_jobs or 0 }}</h2>
+                                <p class="mb-0 text-muted small">งานบริการทั้งหมด</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <a href="{{ url_for('service_jobs') }}" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-eye me-1"></i>ดูรายละเอียด
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #f59e0b !important;">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="p-3 rounded-circle" style="background-color: rgba(245, 158, 11, 0.1);">
+                            <i class="fas fa-chart-line fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="row">
+                            <div class="col">
+                                <h2 class="mb-1 fw-bold text-warning">{{ "%.0f"|format(monthly_revenue or 0) }}</h2>
+                                <p class="mb-0 text-muted small">รายได้เดือนนี้ (บาท)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <a href="{{ url_for('reports') }}" class="btn btn-outline-warning btn-sm">
+                        <i class="fas fa-chart-bar me-1"></i>ดูรายงาน
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #ef4444 !important;">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="p-3 rounded-circle" style="background-color: rgba(239, 68, 68, 0.1);">
+                            <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="row">
+                            <div class="col">
+                                <h2 class="mb-1 fw-bold text-danger">{{ pending_jobs or 0 }}</h2>
+                                <p class="mb-0 text-muted small">งานรอดำเนินการ</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="badge bg-danger">ต้องดำเนินการ</span>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>การดำเนินการด่วน</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-2">
+                        <a href="{{ url_for('customers') }}" class="btn btn-outline-primary w-100 d-flex flex-column align-items-center py-3">
+                            <i class="fas fa-user-plus fa-2x mb-2"></i>
+                            <span>เพิ่มลูกค้า</span>
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{{ url_for('service_jobs') }}" class="btn btn-outline-success w-100 d-flex flex-column align-items-center py-3">
+                            <i class="fas fa-tools fa-2x mb-2"></i>
+                            <span>งานใหม่</span>
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{{ url_for('sales') }}" class="btn btn-outline-warning w-100 d-flex flex-column align-items-center py-3">
+                            <i class="fas fa-cash-register fa-2x mb-2"></i>
+                            <span>ขายสินค้า</span>
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{{ url_for('inventory') }}" class="btn btn-outline-info w-100 d-flex flex-column align-items-center py-3">
+                            <i class="fas fa-boxes fa-2x mb-2"></i>
+                            <span>คลังสินค้า</span>
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{{ url_for('reports') }}" class="btn btn-outline-secondary w-100 d-flex flex-column align-items-center py-3">
+                            <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                            <span>รายงาน</span>
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{{ url_for('invoices') }}" class="btn btn-outline-dark w-100 d-flex flex-column align-items-center py-3">
+                            <i class="fas fa-file-invoice fa-2x mb-2"></i>
+                            <span>ใบเสร็จ</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-clock me-2"></i>งานล่าสุด</h5>
+                <a href="{{ url_for('service_jobs') }}" class="btn btn-primary btn-sm">
+                    ดูทั้งหมด <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_jobs and recent_jobs|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>รหัสงาน</th>
+                                <th>ลูกค้า</th>
+                                <th>อุปกรณ์</th>
+                                <th>สถานะ</th>
+                                <th>วันที่</th>
+                                <th>จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for job in recent_jobs %}
+                            <tr>
+                                <td><strong class="text-primary">#{{ job.id }}</strong></td>
+                                <td>{{ job.customer.name if job.customer else 'ไม่ระบุ' }}</td>
+                                <td>
+                                    {% if job.device %}
+                                        {{ job.device.brand }} {{ job.device.model }}
+                                    {% else %}
+                                        ไม่ระบุ
+                                    {% endif %}
+                                </td>
+                                <td>{{ job.status|status_badge|safe }}</td>
+                                <td>
+                                    <small>{{ job.created_at.strftime('%d/%m/%Y') if job.created_at else '-' }}</small>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('service_jobs') }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-tools fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">ยังไม่มีงานบริการ</h6>
+                    <p class="text-muted mb-3">เริ่มต้นด้วยการสร้างงานบริการใหม่</p>
+                    <a href="{{ url_for('service_jobs') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>สร้างงานแรก
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- System Status -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-heartbeat me-2"></i>สถานะระบบ</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted">งานรอดำเนินการ</small>
+                        <small class="fw-bold">{{ pending_jobs or 0 }}/{{ total_service_jobs or 0 }}</small>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-warning" style="width: {{ (pending_jobs / (total_service_jobs or 1) * 100)|round if total_service_jobs > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted">งานเสร็จสิ้น</small>
+                        <small class="fw-bold">{{ completed_jobs or 0 }}/{{ total_service_jobs or 0 }}</small>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" style="width: {{ (completed_jobs / (total_service_jobs or 1) * 100)|round if total_service_jobs > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="small">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">สถานะระบบ:</span>
+                        <span class="text-success fw-bold">
+                            <i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>ปกติ
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">ผู้ใช้ออนไลน์:</span>
+                        <span class="text-primary fw-bold">1</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">อัปเดตล่าสุด:</span>
+                        <span class="fw-bold" id="last-update">{{ now().strftime('%H:%M น.') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>สถิติด่วน</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-2">
+                            <h4 class="text-primary mb-1">{{ total_products or 0 }}</h4>
+                            <small class="text-muted">สินค้า</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-2">
+                            <h4 class="text-success mb-1">{{ total_sales or 0 }}</h4>
+                            <small class="text-muted">ยอดขาย</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-2">
+                            <h4 class="text-warning mb-1">{{ low_stock_products or 0 }}</h4>
+                            <small class="text-muted">สต็อคต่ำ</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-2">
+                            <h4 class="text-info mb-1">{{ today_sales or 0 }}</h4>
+                            <small class="text-muted">ขายวันนี้</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Update time every minute
+    setInterval(() => {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('th-TH', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+        }) + ' น.';
+        
+        const updateElement = document.getElementById('last-update');
+        if (updateElement) {
+            updateElement.textContent = timeString;
+        }
+    }, 60000);
+
+    // Auto-refresh dashboard every 5 minutes
+    setTimeout(() => {
+        location.reload();
+    }, 300000);
+
+    // Card hover effects
+    document.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.transition = 'transform 0.3s ease';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+
+    console.log('🚀 Dashboard loaded successfully!');
+    console.log('📊 Stats:', {
+        customers: {{ total_customers or 0 }},
+        jobs: {{ total_service_jobs or 0 }},
+        revenue: {{ monthly_revenue or 0 }}
+    });
+</script>
 {% endblock %}

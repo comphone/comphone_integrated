@@ -1,87 +1,35 @@
-# Comphone Integrated System - Git Ignore
-
-# Environment files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-instance/
-
-# Logs
-logs/
-*.log
-
-# Credentials
-credentials/google_credentials.json
-credentials/google_token.json
-credentials.json
-*.pem
-*.key
-
-# Uploads
-static/uploads/*
-!static/uploads/.gitkeep
-
 # Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Virtual Environment
-venv/
-env/
-ENV/
+*.pyc
+*.pyo
+*.pyd
+*.env
+.env
 .venv/
+venv/
+ENV/
+env/
+*.sqlite3
+*.db
+instance/
 
-# IDE
-.vscode/
-.idea/
+# Editor / OS
+.DS_Store
+Thumbs.db
 *.swp
 *.swo
-*~
+*.bak
+*.tmp
+.idea/
+.vscode/
 
-# OS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# Logs
+*.log
 
-# Flask
-instance/
-.webassets-cache
-
-# Coverage
+# Testing / Coverage
 htmlcov/
 .tox/
+.nox/
 .coverage
 .coverage.*
 .cache
@@ -89,12 +37,32 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
-.pytest_cache/
 
-# Migrations (if using Flask-Migrate)
-migrations/versions/
+# Flask specific
+*.egg-info/
+*.egg/
+dist/
+build/
 
-# Configuration backups
-*.bak
-*.backup
-*.old
+# Secrets
+credentials.json
+client_secrets.json
+token.json
+secrets.json
+config.yaml
+config.yml
+
+# Zip / binary
+*.zip
+*.tar.gz
+*.tar
+*.7z
+*.exe
+*.dll
+
+# Node (if applicable)
+node_modules/
+
+# Others
+static/*.log
+*.pid

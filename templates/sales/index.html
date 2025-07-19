@@ -1,0 +1,1021 @@
+{% extends "base.html" %}
+
+{% block title %}ระบบขาย POS{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: #f8fafc;
+        overflow-x: hidden;
+    }
+    
+    .pos-container {
+        height: calc(100vh - 120px);
+        display: flex;
+        gap: 20px;
+    }
+    
+    .products-section {
+        flex: 2;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+    }
+    
+    .cart-section {
+        flex: 1;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        max-height: 100%;
+    }
+    
+    .section-header {
+        background: linear-gradient(135deg, #3b82f6, #1e40af);
+        color: white;
+        padding: 20px;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+    
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .search-bar {
+        background: white;
+        padding: 20px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .search-input-group {
+        position: relative;
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 12px 45px 12px 20px;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        outline: none;
+    }
+    
+    .search-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7280;
+    }
+    
+    .barcode-btn {
+        position: absolute;
+        right: 45px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #3b82f6;
+        font-size: 1.1rem;
+        cursor: pointer;
+        padding: 5px;
+    }
+    
+    .categories-bar {
+        padding: 15px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+    }
+    
+    .category-btn {
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        min-width: fit-content;
+    }
+    
+    .category-btn.active {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        color: white;
+    }
+    
+    .category-btn:hover:not(.active) {
+        background: #e2e8f0;
+        color: #1e40af;
+    }
+    
+    .products-grid {
+        padding: 20px;
+        overflow-y: auto;
+        height: calc(100% - 200px);
+    }
+    
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 15px;
+    }
+    
+    .product-card {
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .product-card:hover {
+        border-color: #3b82f6;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(59, 130, 246, 0.15);
+    }
+    
+    .product-card.out-of-stock {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .product-image {
+        width: 60px;
+        height: 60px;
+        background: #f1f5f9;
+        border-radius: 10px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        font-size: 1.5rem;
+    }
+    
+    .product-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 5px;
+        line-height: 1.2;
+    }
+    
+    .product-price {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #059669;
+        margin-bottom: 5px;
+    }
+    
+    .product-stock {
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+    
+    .stock-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: #10b981;
+        color: white;
+        border-radius: 10px;
+        padding: 2px 6px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .stock-badge.low {
+        background: #f59e0b;
+    }
+    
+    .stock-badge.out {
+        background: #ef4444;
+    }
+    
+    .cart-header {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .cart-items {
+        flex: 1;
+        overflow-y: auto;
+        padding: 15px;
+    }
+    
+    .cart-item {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 10px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .cart-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+    }
+    
+    .cart-item-name {
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.9rem;
+        line-height: 1.2;
+    }
+    
+    .cart-item-remove {
+        background: #fee2e2;
+        color: #dc2626;
+        border: none;
+        border-radius: 6px;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.8rem;
+    }
+    
+    .cart-item-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .qty-btn {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+    
+    .qty-input {
+        width: 50px;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 4px;
+        font-size: 0.9rem;
+    }
+    
+    .cart-item-price {
+        font-weight: 700;
+        color: #059669;
+    }
+    
+    .cart-summary {
+        padding: 20px;
+        border-top: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+    
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+    }
+    
+    .summary-row.total {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e40af;
+        padding-top: 10px;
+        border-top: 2px solid #e2e8f0;
+        margin-top: 10px;
+    }
+    
+    .customer-section {
+        padding: 15px 20px;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .customer-select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    
+    .payment-section {
+        padding: 20px;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .payment-methods {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .payment-btn {
+        padding: 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .payment-btn.active {
+        border-color: #3b82f6;
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .checkout-btn {
+        width: 100%;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 15px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .checkout-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+    }
+    
+    .checkout-btn:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .empty-cart {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6b7280;
+    }
+    
+    .empty-cart i {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        color: #d1d5db;
+    }
+    
+    .quick-actions {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .quick-btn {
+        flex: 1;
+        padding: 8px 12px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-btn:hover {
+        background: #e2e8f0;
+    }
+    
+    .keyboard-shortcuts {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border: 1px solid #e2e8f0;
+        font-size: 0.8rem;
+        color: #6b7280;
+    }
+    
+    .shortcut-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+    }
+    
+    .shortcut-key {
+        background: #f1f5f9;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-weight: 600;
+    }
+    
+    @media (max-width: 1200px) {
+        .pos-container {
+            flex-direction: column;
+            height: auto;
+        }
+        
+        .cart-section {
+            max-height: 500px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 text-gray-800 mb-0">
+                        <i class="fas fa-cash-register me-2 text-primary"></i>ระบบขาย POS
+                    </h1>
+                    <p class="text-muted mb-0">จุดขายและการจัดการรายการสินค้า</p>
+                </div>
+                <div class="d-flex gap-3">
+                    <button class="btn btn-outline-primary" onclick="openSalesHistory()">
+                        <i class="fas fa-history me-2"></i>ประวัติการขาย
+                    </button>
+                    <button class="btn btn-outline-success" onclick="printLastReceipt()">
+                        <i class="fas fa-print me-2"></i>พิมพ์ใบเสร็จล่าสุด
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- POS Interface -->
+    <div class="pos-container">
+        <!-- Products Section -->
+        <div class="products-section">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fas fa-boxes me-2"></i>สินค้า
+                </h3>
+                <div class="text-sm opacity-75">
+                    {{ products|length or 0 }} รายการ
+                </div>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="search-bar">
+                <div class="search-input-group">
+                    <input type="text" class="search-input" id="productSearch" 
+                           placeholder="ค้นหาสินค้า หรือสแกนบาร์โค้ด..." autofocus>
+                    <button class="barcode-btn" onclick="startBarcodeScanner()">
+                        <i class="fas fa-barcode"></i>
+                    </button>
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+            </div>
+            
+            <!-- Categories -->
+            <div class="categories-bar">
+                <button class="category-btn active" data-category="all">ทั้งหมด</button>
+                <button class="category-btn" data-category="accessories">อุปกรณ์เสริม</button>
+                <button class="category-btn" data-category="cases">เคส</button>
+                <button class="category-btn" data-category="chargers">อแดปเตอร์</button>
+                <button class="category-btn" data-category="screen_protectors">ฟิล์มกันรอย</button>
+                <button class="category-btn" data-category="parts">อะไหล่</button>
+                <button class="category-btn" data-category="tools">เครื่องมือ</button>
+            </div>
+            
+            <!-- Products Grid -->
+            <div class="products-grid">
+                <div class="product-grid" id="productsGrid">
+                    {% if products %}
+                        {% for product in products %}
+                        <div class="product-card {{ 'out-of-stock' if product.stock_quantity <= 0 }}" 
+                             data-id="{{ product.id }}"
+                             data-name="{{ product.name|lower }}"
+                             data-category="{{ product.category|lower }}"
+                             data-sku="{{ product.sku|lower }}"
+                             onclick="addToCart({{ product.id }}, '{{ product.name }}', {{ product.price }}, {{ product.stock_quantity }})">
+                            
+                            <div class="stock-badge {{ 'out' if product.stock_quantity <= 0 else 'low' if product.stock_quantity <= product.min_stock_level else '' }}">
+                                {{ product.stock_quantity }}
+                            </div>
+                            
+                            <div class="product-image">
+                                {% if product.image %}
+                                    <img src="{{ product.image }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+                                {% else %}
+                                    <i class="fas fa-box"></i>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="product-name">{{ product.name }}</div>
+                            <div class="product-price">{{ "{:,.0f}".format(product.price) }} ฿</div>
+                            <div class="product-stock">{{ product.sku }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-span-full text-center py-8">
+                            <i class="fas fa-boxes fa-3x text-gray-300 mb-4"></i>
+                            <h4 class="text-gray-500">ยังไม่มีสินค้า</h4>
+                            <p class="text-gray-400">เพิ่มสินค้าเพื่อเริ่มการขาย</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cart Section -->
+        <div class="cart-section">
+            <div class="cart-header">
+                <h3 class="section-title">
+                    <i class="fas fa-shopping-cart me-2"></i>รายการสินค้า
+                </h3>
+                <div class="mt-2">
+                    <span id="cartItemCount">0</span> รายการ
+                </div>
+            </div>
+            
+            <!-- Customer Selection -->
+            <div class="customer-section">
+                <label class="form-label mb-2">
+                    <i class="fas fa-user me-2"></i>ลูกค้า
+                </label>
+                <select class="customer-select" id="customerSelect">
+                    <option value="">ลูกค้าทั่วไป</option>
+                    {% for customer in customers %}
+                    <option value="{{ customer.id }}">{{ customer.name }} - {{ customer.phone }}</option>
+                    {% endfor %}
+                </select>
+                
+                <div class="quick-actions">
+                    <button class="quick-btn" onclick="addNewCustomer()">
+                        <i class="fas fa-user-plus me-1"></i>ลูกค้าใหม่
+                    </button>
+                    <button class="quick-btn" onclick="clearCart()">
+                        <i class="fas fa-trash me-1"></i>ล้างรายการ
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Cart Items -->
+            <div class="cart-items" id="cartItems">
+                <div class="empty-cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <h5>ไม่มีสินค้าในรายการ</h5>
+                    <p>เลือกสินค้าเพื่อเริ่มการขาย</p>
+                </div>
+            </div>
+            
+            <!-- Cart Summary -->
+            <div class="cart-summary" id="cartSummary" style="display: none;">
+                <div class="summary-row">
+                    <span>รวมราคาสินค้า</span>
+                    <span id="subtotal">0 ฿</span>
+                </div>
+                <div class="summary-row">
+                    <span>ส่วนลด</span>
+                    <span id="discount">0 ฿</span>
+                </div>
+                <div class="summary-row">
+                    <span>ภาษี (7%)</span>
+                    <span id="tax">0 ฿</span>
+                </div>
+                <div class="summary-row total">
+                    <span>ยอดรวมทั้งสิ้น</span>
+                    <span id="total">0 ฿</span>
+                </div>
+            </div>
+            
+            <!-- Payment Section -->
+            <div class="payment-section" id="paymentSection" style="display: none;">
+                <label class="form-label mb-2">
+                    <i class="fas fa-credit-card me-2"></i>วิธีชำระเงิน
+                </label>
+                <div class="payment-methods">
+                    <button class="payment-btn active" data-method="cash">
+                        <i class="fas fa-money-bill-wave d-block mb-1"></i>
+                        เงินสด
+                    </button>
+                    <button class="payment-btn" data-method="card">
+                        <i class="fas fa-credit-card d-block mb-1"></i>
+                        บัตร
+                    </button>
+                    <button class="payment-btn" data-method="transfer">
+                        <i class="fas fa-exchange-alt d-block mb-1"></i>
+                        โอน
+                    </button>
+                    <button class="payment-btn" data-method="qr">
+                        <i class="fas fa-qrcode d-block mb-1"></i>
+                        QR Code
+                    </button>
+                </div>
+                
+                <button class="checkout-btn" id="checkoutBtn" onclick="processCheckout()" disabled>
+                    <i class="fas fa-check me-2"></i>ชำระเงิน
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Keyboard Shortcuts -->
+<div class="keyboard-shortcuts">
+    <div class="fw-bold mb-2">คีย์ลัด</div>
+    <div class="shortcut-item">
+        <span>ค้นหาสินค้า</span>
+        <span class="shortcut-key">F1</span>
+    </div>
+    <div class="shortcut-item">
+        <span>ลูกค้าใหม่</span>
+        <span class="shortcut-key">F2</span>
+    </div>
+    <div class="shortcut-item">
+        <span>ชำระเงิน</span>
+        <span class="shortcut-key">F3</span>
+    </div>
+    <div class="shortcut-item">
+        <span>ล้างรายการ</span>
+        <span class="shortcut-key">F4</span>
+    </div>
+</div>
+
+<script>
+let cart = [];
+let selectedPaymentMethod = 'cash';
+
+// Category filtering
+document.querySelectorAll('.category-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        const category = this.dataset.category;
+        filterProducts(category);
+    });
+});
+
+// Product search
+document.getElementById('productSearch').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    searchProducts(searchTerm);
+});
+
+// Payment method selection
+document.querySelectorAll('.payment-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.payment-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        selectedPaymentMethod = this.dataset.method;
+    });
+});
+
+function filterProducts(category) {
+    const products = document.querySelectorAll('.product-card');
+    products.forEach(product => {
+        const productCategory = product.dataset.category;
+        if (category === 'all' || productCategory === category) {
+            product.style.display = 'block';
+        } else {
+            product.style.display = 'none';
+        }
+    });
+}
+
+function searchProducts(searchTerm) {
+    const products = document.querySelectorAll('.product-card');
+    products.forEach(product => {
+        const name = product.dataset.name;
+        const sku = product.dataset.sku;
+        if (name.includes(searchTerm) || sku.includes(searchTerm)) {
+            product.style.display = 'block';
+        } else {
+            product.style.display = 'none';
+        }
+    });
+}
+
+function addToCart(productId, name, price, stock) {
+    if (stock <= 0) {
+        alert('สินค้าหมดสต็อก');
+        return;
+    }
+    
+    const existingItem = cart.find(item => item.id === productId);
+    
+    if (existingItem) {
+        if (existingItem.quantity < stock) {
+            existingItem.quantity += 1;
+        } else {
+            alert('จำนวนสินค้าเกินสต็อกที่มี');
+            return;
+        }
+    } else {
+        cart.push({
+            id: productId,
+            name: name,
+            price: price,
+            quantity: 1,
+            stock: stock
+        });
+    }
+    
+    updateCartDisplay();
+}
+
+function removeFromCart(productId) {
+    cart = cart.filter(item => item.id !== productId);
+    updateCartDisplay();
+}
+
+function updateQuantity(productId, quantity) {
+    const item = cart.find(item => item.id === productId);
+    if (item) {
+        if (quantity > 0 && quantity <= item.stock) {
+            item.quantity = quantity;
+        } else if (quantity <= 0) {
+            removeFromCart(productId);
+        } else {
+            alert('จำนวนสินค้าเกินสต็อกที่มี');
+        }
+        updateCartDisplay();
+    }
+}
+
+function updateCartDisplay() {
+    const cartItems = document.getElementById('cartItems');
+    const cartSummary = document.getElementById('cartSummary');
+    const paymentSection = document.getElementById('paymentSection');
+    const cartItemCount = document.getElementById('cartItemCount');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    
+    cartItemCount.textContent = cart.length;
+    
+    if (cart.length === 0) {
+        cartItems.innerHTML = `
+            <div class="empty-cart">
+                <i class="fas fa-shopping-cart"></i>
+                <h5>ไม่มีสินค้าในรายการ</h5>
+                <p>เลือกสินค้าเพื่อเริ่มการขาย</p>
+            </div>
+        `;
+        cartSummary.style.display = 'none';
+        paymentSection.style.display = 'none';
+        return;
+    }
+    
+    let cartHTML = '';
+    cart.forEach(item => {
+        cartHTML += `
+            <div class="cart-item">
+                <div class="cart-item-header">
+                    <div class="cart-item-name">${item.name}</div>
+                    <button class="cart-item-remove" onclick="removeFromCart(${item.id})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="cart-item-controls">
+                    <div class="quantity-controls">
+                        <button class="qty-btn" onclick="updateQuantity(${item.id}, ${item.quantity - 1})">-</button>
+                        <input type="number" class="qty-input" value="${item.quantity}" 
+                               onchange="updateQuantity(${item.id}, parseInt(this.value))" min="1" max="${item.stock}">
+                        <button class="qty-btn" onclick="updateQuantity(${item.id}, ${item.quantity + 1})">+</button>
+                    </div>
+                    <div class="cart-item-price">${(item.price * item.quantity).toLocaleString()} ฿</div>
+                </div>
+            </div>
+        `;
+    });
+    
+    cartItems.innerHTML = cartHTML;
+    
+    // Calculate totals
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const discount = 0; // TODO: Implement discount logic
+    const tax = subtotal * 0.07;
+    const total = subtotal - discount + tax;
+    
+    document.getElementById('subtotal').textContent = subtotal.toLocaleString() + ' ฿';
+    document.getElementById('discount').textContent = discount.toLocaleString() + ' ฿';
+    document.getElementById('tax').textContent = tax.toLocaleString() + ' ฿';
+    document.getElementById('total').textContent = total.toLocaleString() + ' ฿';
+    
+    cartSummary.style.display = 'block';
+    paymentSection.style.display = 'block';
+    checkoutBtn.disabled = false;
+}
+
+function clearCart() {
+    if (cart.length > 0 && confirm('ต้องการล้างรายการสินค้าทั้งหมด?')) {
+        cart = [];
+        updateCartDisplay();
+    }
+}
+
+function addNewCustomer() {
+    const name = prompt('ชื่อลูกค้า:');
+    const phone = prompt('เบอร์โทรศัพท์:');
+    
+    if (name && phone) {
+        // Add customer to database
+        fetch('/customers', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: name,
+                phone: phone
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Add to select and select it
+                const option = new Option(`${name} - ${phone}`, data.id);
+                document.getElementById('customerSelect').add(option);
+                document.getElementById('customerSelect').value = data.id;
+            }
+        });
+    }
+}
+
+function processCheckout() {
+    if (cart.length === 0) {
+        alert('ไม่มีสินค้าในรายการ');
+        return;
+    }
+    
+    const customerId = document.getElementById('customerSelect').value;
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const tax = subtotal * 0.07;
+    const total = subtotal + tax;
+    
+    const saleData = {
+        customer_id: customerId || null,
+        items: cart,
+        subtotal: subtotal,
+        tax: tax,
+        total: total,
+        payment_method: selectedPaymentMethod
+    };
+    
+    // Show loading
+    document.getElementById('checkoutBtn').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังประมวลผล...';
+    document.getElementById('checkoutBtn').disabled = true;
+    
+    fetch('/sales', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(saleData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            alert('ขายสำเร็จ! หมายเลขบิล: ' + data.sale_id);
+            
+            // Print receipt if needed
+            if (confirm('ต้องการพิมพ์ใบเสร็จ?')) {
+                printReceipt(data.sale_id);
+            }
+            
+            // Clear cart
+            cart = [];
+            updateCartDisplay();
+            
+            // Reset customer selection
+            document.getElementById('customerSelect').value = '';
+        } else {
+            alert('เกิดข้อผิดพลาด: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        console.error('Error:', error);
+    })
+    .finally(() => {
+        document.getElementById('checkoutBtn').innerHTML = '<i class="fas fa-check me-2"></i>ชำระเงิน';
+        document.getElementById('checkoutBtn').disabled = false;
+    });
+}
+
+function printReceipt(saleId) {
+    window.open(`/sales/${saleId}/receipt`, '_blank');
+}
+
+function printLastReceipt() {
+    // Get last sale ID and print
+    fetch('/api/sales/last')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.sale_id) {
+                printReceipt(data.sale_id);
+            } else {
+                alert('ไม่พบใบเสร็จล่าสุด');
+            }
+        });
+}
+
+function openSalesHistory() {
+    window.open('/sales/history', '_blank');
+}
+
+function startBarcodeScanner() {
+    // TODO: Implement barcode scanner
+    alert('ฟีเจอร์สแกนบาร์โค้ดจะเปิดใช้งานเร็วๆ นี้');
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'F1') {
+        e.preventDefault();
+        document.getElementById('productSearch').focus();
+    } else if (e.key === 'F2') {
+        e.preventDefault();
+        addNewCustomer();
+    } else if (e.key === 'F3') {
+        e.preventDefault();
+        if (!document.getElementById('checkoutBtn').disabled) {
+            processCheckout();
+        }
+    } else if (e.key === 'F4') {
+        e.preventDefault();
+        clearCart();
+    } else if (e.key === 'Enter' && e.target.id === 'productSearch') {
+        // If search has only one result, add it to cart
+        const visibleProducts = document.querySelectorAll('.product-card[style*="block"], .product-card:not([style*="none"])');
+        if (visibleProducts.length === 1) {
+            visibleProducts[0].click();
+            e.target.value = '';
+        }
+    }
+});
+
+// Auto-focus on search when page loads
+window.addEventListener('load', function() {
+    document.getElementById('productSearch').focus();
+});
+
+// Real-time clock
+function updateClock() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('th-TH');
+    const dateString = now.toLocaleDateString('th-TH');
+    
+    // Update clock if element exists
+    const clockElement = document.getElementById('currentTime');
+    if (clockElement) {
+        clockElement.textContent = `${timeString} | ${dateString}`;
+    }
+}
+
+setInterval(updateClock, 1000);
+updateClock();
+</script>
+{% endblock %}

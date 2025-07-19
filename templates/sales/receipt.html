@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ใบเสร็จ #{{ invoice.invoice_number }} - Comphone Service Center</title>
+    <style>
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+            .receipt { box-shadow: none; }
+        }
+        
+        body {
+            font-family: 'Sarabun', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .receipt {
+            width: 80mm;
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px dashed #ccc;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .company-info {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        .receipt-info {
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+        }
+        
+        .receipt-info div {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+        }
+        
+        .customer-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            font-size: 0.8rem;
+        }
+        
+        .items-table th {
+            text-align: left;
+            padding: 5px 0;
+            border-bottom: 1px solid #ddd;
+            font-weight: 600;
+        }
+        
+        .items-table td {
+            padding: 3px 0;
+            border-bottom: 1px dotted #ddd;
+        }
+        
+        .item-name {
+            font-weight: 500;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .summary {
+            border-top: 2px dashed #ccc;
+            padding-top: 10px;
+            font-size: 0.85rem;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+        }
+        
+        .total-row {
+            font-weight: bold;
+            font-size: 1rem;
+            border-top: 1px solid #333;
+            padding-top: 5px;
+            margin-top: 5px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px dashed #ccc;
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .thank-you {
+            font-weight: bold;
+            color: #27ae60;
+            margin-bottom: 10px;
+        }
+        
+        .qr-code {
+            margin: 10px 0;
+        }
+        
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .print-button:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <button class="print-button no-print" onclick="window.print()">
+        <i class="fas fa-print"></i> พิมพ์ใบเสร็จ
+    </button>
+    
+    <div class="receipt">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                📱 COMPHONE SERVICE CENTER
+            </div>
+            <div class="company-info">
+                ศูนย์บริการและซ่อมมือถือ<br>
+                123 ถนนเทคโนโลยี กรุงเทพฯ 10110<br>
+                โทร: 02-123-4567<br>
+                เลขประจำตัวผู้เสียภาษี: 1234567890123
+            </div>
+        </div>
+        
+        <!-- Receipt Info -->
+        <div class="receipt-info">
+            <div>
+                <span>เลขที่ใบเสร็จ:</span>
+                <span><strong>{{ invoice.invoice_number }}</strong></span>
+            </div>
+            <div>
+                <span>วันที่:</span>
+                <span>{{ sale.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+            </div>
+            <div>
+                <span>พนักงานขาย:</span>
+                <span>{{ sale.salesperson.username }}</span>
+            </div>
+            <div>
+                <span>วิธีชำระเงิน:</span>
+                <span>
+                    {% set payment_methods = {
+                        'cash': 'เงินสด',
+                        'card': 'บัตรเครดิต/เดบิต',
+                        'transfer': 'โอนเงิน',
+                        'qr': 'QR Code'
+                    } %}
+                    {{ payment_methods.get(sale.payment_method, sale.payment_method) }}
+                </span>
+            </div>
+        </div>
+        
+        <!-- Customer Info -->
+        {% if sale.customer %}
+        <div class="customer-info">
+            <strong>ข้อมูลลูกค้า:</strong><br>
+            {{ sale.customer.name }}<br>
+            โทร: {{ sale.customer.phone }}<br>
+            {% if sale.customer.email %}
+            อีเมล: {{ sale.customer.email }}
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Items Table -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>รายการ</th>
+                    <th class="text-right">จำนวน</th>
+                    <th class="text-right">ราคา</th>
+                    <th class="text-right">รวม</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in sale.items %}
+                <tr>
+                    <td class="item-name">{{ item.product.name }}</td>
+                    <td class="text-right">{{ item.quantity }}</td>
+                    <td class="text-right">{{ "{:,.0f}".format(item.unit_price) }}</td>
+                    <td class="text-right">{{ "{:,.0f}".format(item.unit_price * item.quantity) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Summary -->
+        <div class="summary">
+            {% set subtotal = sale.total_amount + sale.discount - sale.tax %}
+            <div class="summary-row">
+                <span>รวมเป็นเงิน:</span>
+                <span>{{ "{:,.2f}".format(subtotal) }} บาท</span>
+            </div>
+            
+            {% if sale.discount > 0 %}
+            <div class="summary-row">
+                <span>ส่วนลด:</span>
+                <span>-{{ "{:,.2f}".format(sale.discount) }} บาท</span>
+            </div>
+            {% endif %}
+            
+            {% if sale.tax > 0 %}
+            <div class="summary-row">
+                <span>ภาษีมูลค่าเพิ่ม (7%):</span>
+                <span>{{ "{:,.2f}".format(sale.tax) }} บาท</span>
+            </div>
+            {% endif %}
+            
+            <div class="summary-row total-row">
+                <span>รวมทั้งสิ้น:</span>
+                <span>{{ "{:,.2f}".format(sale.total_amount) }} บาท</span>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div class="thank-you">
+                ขขอบคุณที่ใช้บริการ
+            </div>
+            <div>
+                สอบถามข้อมูลเพิ่มเติม<br>
+                Line: @comphone | Facebook: ComphoneService<br>
+                เปิดบริการ: จันทร์-เสาร์ 09:00-18:00
+            </div>
+            
+            <!-- QR Code for digital receipt (optional) -->
+            <div class="qr-code">
+                <small>สแกน QR Code เพื่อดูใบเสร็จออนไลน์</small><br>
+                <!-- QR Code จะสร้างด้วย JavaScript หรือ API -->
+                <div style="width: 60px; height: 60px; background: #f0f0f0; margin: 5px auto; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd;">
+                    QR
+                </div>
+            </div>
+            
+            <div style="margin-top: 15px; font-size: 0.7rem;">
+                ** ใบเสร็จนี้ออกโดยระบบ Comphone POS **<br>
+                พิมพ์เมื่อ: {{ datetime.now().strftime('%d/%m/%Y %H:%M:%S') }}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto print when page loads (optional)
+        // window.onload = function() {
+        //     window.print();

@@ -1,0 +1,635 @@
+{% extends "base.html" %}
+
+{% block title %}จัดการลูกค้า{% endblock %}
+
+{% block extra_css %}
+<style>
+    .customer-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .customer-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        border-color: #3b82f6;
+    }
+    
+    .customer-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3b82f6, #1e40af);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-right: 15px;
+    }
+    
+    .customer-info h5 {
+        color: #1e40af;
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+    
+    .customer-meta {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+    
+    .customer-meta i {
+        margin-right: 5px;
+        width: 15px;
+    }
+    
+    .customer-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-action {
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .btn-view {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .btn-view:hover {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .btn-edit {
+        background: #fef3c7;
+        color: #d97706;
+    }
+    
+    .btn-edit:hover {
+        background: #f59e0b;
+        color: white;
+    }
+    
+    .btn-delete {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+    
+    .btn-delete:hover {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .stats-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        font-size: 1.5rem;
+        color: white;
+    }
+    
+    .stats-icon.bg-primary {
+        background: linear-gradient(135deg, #3b82f6, #1e40af);
+    }
+    
+    .stats-icon.bg-success {
+        background: linear-gradient(135deg, #10b981, #059669);
+    }
+    
+    .stats-icon.bg-warning {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+    
+    .stats-icon.bg-info {
+        background: linear-gradient(135deg, #06b6d4, #0891b2);
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1e40af;
+        margin-bottom: 5px;
+    }
+    
+    .stats-label {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+    
+    .search-box {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border: 2px solid #e2e8f0;
+        padding: 15px 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .search-box:focus-within {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .search-input {
+        border: none;
+        outline: none;
+        width: 100%;
+        font-size: 1rem;
+        color: #374151;
+    }
+    
+    .search-input::placeholder {
+        color: #9ca3af;
+    }
+    
+    .btn-add-customer {
+        background: linear-gradient(135deg, #10b981, #059669);
+        border: none;
+        border-radius: 12px;
+        padding: 12px 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-add-customer:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+    }
+    
+    .filter-tabs {
+        background: white;
+        border-radius: 15px;
+        padding: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .filter-tab {
+        border: none;
+        background: transparent;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        color: #6b7280;
+    }
+    
+    .filter-tab.active {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .filter-tab:not(.active):hover {
+        background: #f1f5f9;
+        color: #1e40af;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6b7280;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        color: #d1d5db;
+    }
+    
+    .pagination-custom {
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+    }
+    
+    .pagination-custom .page-link {
+        border: none;
+        border-radius: 8px;
+        margin: 0 3px;
+        color: #6b7280;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .pagination-custom .page-link:hover {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .pagination-custom .page-item.active .page-link {
+        background: #3b82f6;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 text-gray-800 mb-0">
+                        <i class="fas fa-users me-2 text-primary"></i>จัดการลูกค้า
+                    </h1>
+                    <p class="text-muted mb-0">บริหารจัดการข้อมูลลูกค้าและประวัติการใช้บริการ</p>
+                </div>
+                <button class="btn btn-success btn-add-customer" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+                    <i class="fas fa-plus me-2"></i>เพิ่มลูกค้าใหม่
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon bg-primary">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stats-number">{{ customers|length if customers else 0 }}</div>
+                <div class="stats-label">ลูกค้าทั้งหมด</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon bg-success">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="stats-number">{{ active_customers if active_customers else 0 }}</div>
+                <div class="stats-label">ลูกค้าที่ใช้บริการ</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon bg-warning">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <div class="stats-number">{{ total_devices if total_devices else 0 }}</div>
+                <div class="stats-label">อุปกรณ์ที่ลงทะเบียน</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon bg-info">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stats-number">{{ this_month_customers if this_month_customers else 0 }}</div>
+                <div class="stats-label">ลูกค้าใหม่เดือนนี้</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="search-box">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-search text-muted me-3"></i>
+                    <input type="text" class="search-input" placeholder="ค้นหาลูกค้า... (ชื่อ, เบอร์โทร, อีเมล)" id="customerSearch">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all">
+                    <i class="fas fa-users me-2"></i>ทั้งหมด
+                </button>
+                <button class="filter-tab" data-filter="active">
+                    <i class="fas fa-user-check me-2"></i>ใช้งาน
+                </button>
+                <button class="filter-tab" data-filter="inactive">
+                    <i class="fas fa-user-times me-2"></i>ไม่ใช้งาน
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customers List -->
+    <div class="row" id="customersList">
+        {% if customers %}
+            {% for customer in customers %}
+            <div class="col-xl-4 col-md-6 mb-4 customer-item" 
+                 data-name="{{ customer.name|lower }}"
+                 data-phone="{{ customer.phone }}"
+                 data-email="{{ customer.email|lower if customer.email else '' }}"
+                 data-status="{{ 'active' if customer.devices else 'inactive' }}">
+                <div class="customer-card p-4">
+                    <div class="d-flex align-items-start">
+                        <div class="customer-avatar">
+                            {{ customer.name[0]|upper }}
+                        </div>
+                        <div class="customer-info flex-grow-1">
+                            <h5>{{ customer.name }}</h5>
+                            <div class="customer-meta mb-2">
+                                <div class="mb-1">
+                                    <i class="fas fa-phone"></i>
+                                    {{ customer.phone }}
+                                </div>
+                                {% if customer.email %}
+                                <div class="mb-1">
+                                    <i class="fas fa-envelope"></i>
+                                    {{ customer.email }}
+                                </div>
+                                {% endif %}
+                                <div class="mb-1">
+                                    <i class="fas fa-mobile-alt"></i>
+                                    {{ customer.devices|length if customer.devices else 0 }} อุปกรณ์
+                                </div>
+                                <div>
+                                    <i class="fas fa-calendar"></i>
+                                    เข้าร่วม {{ customer.created_at.strftime('%d/%m/%Y') }}
+                                </div>
+                            </div>
+                            <div class="customer-actions">
+                                <button class="btn-action btn-view" onclick="viewCustomer({{ customer.id }})">
+                                    <i class="fas fa-eye"></i>
+                                    ดู
+                                </button>
+                                <button class="btn-action btn-edit" onclick="editCustomer({{ customer.id }})">
+                                    <i class="fas fa-edit"></i>
+                                    แก้ไข
+                                </button>
+                                <button class="btn-action btn-delete" onclick="deleteCustomer({{ customer.id }})">
+                                    <i class="fas fa-trash"></i>
+                                    ลบ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <h4>ยังไม่มีข้อมูลลูกค้า</h4>
+                    <p>เริ่มต้นด้วยการเพิ่มลูกค้าคนแรกของคุณ</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+                        <i class="fas fa-plus me-2"></i>เพิ่มลูกค้าใหม่
+                    </button>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if customers and customers|length > 12 %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination pagination-custom">
+            <li class="page-item">
+                <a class="page-link" href="#" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+            <li class="page-item"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <li class="page-item">
+                <a class="page-link" href="#" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- Add Customer Modal -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius: 15px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #3b82f6, #1e40af); color: white;">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>เพิ่มลูกค้าใหม่
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="addCustomerForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-user me-2 text-primary"></i>ชื่อ-นามสกุล
+                            </label>
+                            <input type="text" class="form-control" name="name" required 
+                                   style="border-radius: 10px; border: 2px solid #e2e8f0;">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-phone me-2 text-primary"></i>เบอร์โทรศัพท์
+                            </label>
+                            <input type="tel" class="form-control" name="phone" required 
+                                   style="border-radius: 10px; border: 2px solid #e2e8f0;">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-envelope me-2 text-primary"></i>อีเมล
+                            </label>
+                            <input type="email" class="form-control" name="email" 
+                                   style="border-radius: 10px; border: 2px solid #e2e8f0;">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-id-card me-2 text-primary"></i>เลขบัตรประชาชน
+                            </label>
+                            <input type="text" class="form-control" name="id_card" 
+                                   style="border-radius: 10px; border: 2px solid #e2e8f0;">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-map-marker-alt me-2 text-primary"></i>ที่อยู่
+                        </label>
+                        <textarea class="form-control" name="address" rows="3" 
+                                  style="border-radius: 10px; border: 2px solid #e2e8f0;"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-birthday-cake me-2 text-primary"></i>วันเกิด
+                            </label>
+                            <input type="date" class="form-control" name="birthday" 
+                                   style="border-radius: 10px; border: 2px solid #e2e8f0;">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-venus-mars me-2 text-primary"></i>เพศ
+                            </label>
+                            <select class="form-control" name="gender" 
+                                    style="border-radius: 10px; border: 2px solid #e2e8f0;">
+                                <option value="">เลือกเพศ</option>
+                                <option value="male">ชาย</option>
+                                <option value="female">หญิง</option>
+                                <option value="other">อื่นๆ</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-briefcase me-2 text-primary"></i>อาชีพ
+                            </label>
+                            <input type="text" class="form-control" name="occupation" 
+                                   style="border-radius: 10px; border: 2px solid #e2e8f0;">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-sticky-note me-2 text-primary"></i>หมายเหตุ
+                        </label>
+                        <textarea class="form-control" name="notes" rows="2" 
+                                  style="border-radius: 10px; border: 2px solid #e2e8f0;"
+                                  placeholder="บันทึกข้อมูลเพิ่มเติม..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" 
+                        style="border-radius: 10px;">ยกเลิก</button>
+                <button type="button" class="btn btn-primary" onclick="saveCustomer()" 
+                        style="border-radius: 10px; background: linear-gradient(135deg, #3b82f6, #1e40af);">
+                    <i class="fas fa-save me-2"></i>บันทึก
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Search functionality
+document.getElementById('customerSearch').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const customers = document.querySelectorAll('.customer-item');
+    
+    customers.forEach(customer => {
+        const name = customer.dataset.name;
+        const phone = customer.dataset.phone;
+        const email = customer.dataset.email;
+        
+        if (name.includes(searchTerm) || phone.includes(searchTerm) || email.includes(searchTerm)) {
+            customer.style.display = 'block';
+        } else {
+            customer.style.display = 'none';
+        }
+    });
+});
+
+// Filter functionality
+document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        // Update active tab
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        
+        const filter = this.dataset.filter;
+        const customers = document.querySelectorAll('.customer-item');
+        
+        customers.forEach(customer => {
+            const status = customer.dataset.status;
+            
+            if (filter === 'all' || status === filter) {
+                customer.style.display = 'block';
+            } else {
+                customer.style.display = 'none';
+            }
+        });
+    });
+});
+
+// Customer actions
+function viewCustomer(id) {
+    window.location.href = `/customers/${id}`;
+}
+
+function editCustomer(id) {
+    window.location.href = `/customers/${id}/edit`;
+}
+
+function deleteCustomer(id) {
+    if (confirm('คุณแน่ใจที่จะลบลูกค้ารายนี้?')) {
+        fetch(`/customers/${id}`, {
+            method: 'DELETE',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('เกิดข้อผิดพลาดในการลบข้อมูล');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        });
+    }
+}
+
+function saveCustomer() {
+    const form = document.getElementById('addCustomerForm');
+    const formData = new FormData(form);
+    
+    fetch('/customers', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+    });
+}
+
+// Form validation
+document.getElementById('addCustomerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    saveCustomer();
+});
+</script>
+{% endblock %}

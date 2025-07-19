@@ -1,57 +1,204 @@
-<!-- ============================================================================ -->
-<!-- templates/auth/manage_users.html -->
-<!-- ============================================================================ -->
 {% extends "base.html" %}
-{% block title %}จัดการผู้ใช้ - {{ business_name }}{% endblock %}
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3">จัดการผู้ใช้</h1>
-    <button class="btn btn-primary">
-        <i class="fas fa-user-plus me-2"></i>เพิ่มผู้ใช้ใหม่
-    </button>
-</div>
 
-<div class="card">
-    <div class="card-body">
-        {% if users %}
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>ชื่อผู้ใช้</th>
-                        <th>ชื่อ-นามสกุล</th>
-                        <th>อีเมล</th>
-                        <th>บทบาท</th>
-                        <th>สถานะ</th>
-                        <th>การดำเนินการ</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user in users %}
-                    <tr>
-                        <td>{{ user.username }}</td>
-                        <td>{{ user.full_name }}</td>
-                        <td>{{ user.email }}</td>
-                        <td>
-                            <span class="badge bg-info">{{ user.role.value.title() }}</span>
-                        </td>
-                        <td>
-                            <span class="badge {{ 'bg-success' if user.is_active else 'bg-secondary' }}">
-                                {{ 'ใช้งาน' if user.is_active else 'ปิดใช้งาน' }}
-                            </span>
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary">แก้ไข</button>
-                            <button class="btn btn-sm btn-outline-warning">{{ 'ปิดใช้งาน' if user.is_active else 'เปิดใช้งาน' }}</button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+{% block title %}User Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-users"></i> User Management</h5>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Add User
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th>Full Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Last Login</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.id }}</td>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.get_full_name() }}</td>
+                                    <td>{{ user.email or '-' }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if user.role == 'admin' else 'success' if user.role == 'manager' else 'primary' }}">
+                                            {{ user.role.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if user.active else 'secondary' }}">
+                                            {{ 'Active' if user.active else 'Inactive' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if user.last_login %}
+                                            {{ user.last_login.strftime('%Y-%m-%d %H:%M') }}
+                                        {% else %}
+                                            Never
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    onclick="editUser({{ user.id }})">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            {% if user.id != current_user.id %}
+                                                <button type="button" class="btn btn-sm btn-outline-{{ 'secondary' if user.active else 'success' }}" 
+                                                        onclick="toggleUserStatus({{ user.id }})">
+                                                    <i class="fas fa-{{ 'ban' if user.active else 'check' }}"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% else %}
-        <p class="text-muted text-center">ไม่มีผู้ใช้ในระบบ</p>
-        {% endif %}
     </div>
 </div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editUserForm">
+                <div class="modal-body">
+                    <input type="hidden" id="editUserId">
+                    <div class="mb-3">
+                        <label for="editUsername" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="editUsername" readonly>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editFirstName" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="editFirstName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editLastName" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="editLastName" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="editEmail">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPhone" class="form-label">Phone</label>
+                        <input type="text" class="form-control" id="editPhone">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editRole" class="form-label">Role</label>
+                        <select class="form-select" id="editRole">
+                            <option value="admin">Admin</option>
+                            <option value="manager">Manager</option>
+                            <option value="technician">Technician</option>
+                            <option value="sales">Sales</option>
+                            <option value="employee">Employee</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function editUser(userId) {
+    // In a real implementation, you would fetch user data from API
+    // For now, just show the modal
+    const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+    modal.show();
+    
+    // Set user ID
+    document.getElementById('editUserId').value = userId;
+    
+    // In real implementation, populate form with user data
+    // fetch(`/api/users/${userId}`)
+    //     .then(response => response.json())
+    //     .then(user => populateEditForm(user));
+}
+
+function toggleUserStatus(userId) {
+    if (confirm('Are you sure you want to toggle this user\'s status?')) {
+        // In real implementation, make API call to toggle status
+        console.log('Toggle status for user:', userId);
+        // location.reload(); // Refresh page after update
+    }
+}
+
+document.getElementById('editUserForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const userId = document.getElementById('editUserId').value;
+    const formData = {
+        first_name: document.getElementById('editFirstName').value,
+        last_name: document.getElementById('editLastName').value,
+        email: document.getElementById('editEmail').value,
+        phone: document.getElementById('editPhone').value,
+        role: document.getElementById('editRole').value
+    };
+    
+    // In real implementation, submit to API
+    console.log('Update user:', userId, formData);
+    
+    // Close modal and show success message
+    bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+    
+    // Show success alert
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-success alert-dismissible fade show';
+    alert.innerHTML = `
+        User updated successfully!
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.card-body').insertBefore(alert, document.querySelector('.table-responsive'));
+});
+</script>
 {% endblock %}

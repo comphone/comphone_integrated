@@ -1,40 +1,345 @@
-<!-- ============================================================================ -->
-<!-- templates/auth/login.html -->
-<!-- ============================================================================ -->
-{% extends "base.html" %}
-{% block title %}เข้าสู่ระบบ - {{ business_name }}{% endblock %}
-{% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-4">
-        <div class="card">
-            <div class="card-header text-center">
-                <h4 class="mb-0">เข้าสู่ระบบ</h4>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ - Comphone Service Center</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Prompt', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 900px;
+            min-height: 500px;
+        }
+        
+        .login-left {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-left::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+            animation: float 20s infinite linear;
+        }
+        
+        @keyframes float {
+            0% { transform: translateX(0) translateY(0); }
+            100% { transform: translateX(-50px) translateY(-50px); }
+        }
+        
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .logo i {
+            color: #fbbf24;
+        }
+        
+        .welcome-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .feature-list {
+            margin-top: 30px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+        
+        .feature-item i {
+            color: #fbbf24;
+            margin-right: 10px;
+            width: 20px;
+        }
+        
+        .login-right {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-header h2 {
+            color: #1e40af;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .login-header p {
+            color: #6b7280;
+            margin: 0;
+        }
+        
+        .form-floating label {
+            color: #6b7280;
+        }
+        
+        .form-control {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .btn-login {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-login:hover::before {
+            left: 100%;
+        }
+        
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+        
+        .form-check-input:checked {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        
+        .forgot-link {
+            color: #3b82f6;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .forgot-link:hover {
+            color: #1e40af;
+        }
+        
+        .alert {
+            border: none;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .demo-credentials {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 0.85rem;
+        }
+        
+        .demo-credentials h6 {
+            color: #1e40af;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .demo-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .demo-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .login-left {
+                display: none;
+            }
+            
+            .login-container {
+                max-width: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="row g-0 h-100">
+            <div class="col-lg-6">
+                <div class="login-left h-100">
+                    <div class="logo">
+                        <i class="fas fa-mobile-alt"></i>
+                        Comphone
+                    </div>
+                    <h3 class="mb-3">ยินดีต้อนรับสู่ระบบจัดการศูนย์บริการ</h3>
+                    <p class="welcome-text">
+                        ระบบบริหารจัดการศูนย์บริการโทรศัพท์มือถือแบบครบวงจร 
+                        ด้วยเทคโนโลยีที่ทันสมัยและใช้งานง่าย
+                    </p>
+                    
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <i class="fas fa-tools"></i>
+                            <span>จัดการงานซ่อมและบริการ</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-users"></i>
+                            <span>ระบบลูกค้าและประวัติการใช้งาน</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-cash-register"></i>
+                            <span>ระบบขายสินค้า POS</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-chart-line"></i>
+                            <span>รายงานและสถิติครบถ้วน</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>ระบบรักษาความปลอดภัยสูง</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <form method="POST">
-                    <div class="mb-3">
-                        <label for="username" class="form-label">ชื่อผู้ใช้หรืออีเมล</label>
-                        <input type="text" class="form-control" id="username" name="username" required>
+            
+            <div class="col-lg-6">
+                <div class="login-right h-100">
+                    <div class="login-header">
+                        <h2>เข้าสู่ระบบ</h2>
+                        <p>กรุณาป้อนข้อมูลเพื่อเข้าใช้งานระบบ</p>
                     </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">รหัสผ่าน</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
+
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-danger" role="alert">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>{{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   placeholder="ชื่อผู้ใช้งาน" required>
+                            <label for="username">
+                                <i class="fas fa-user me-2"></i>ชื่อผู้ใช้งาน
+                            </label>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input type="password" class="form-control" id="password" name="password" 
+                                   placeholder="รหัสผ่าน" required>
+                            <label for="password">
+                                <i class="fas fa-lock me-2"></i>รหัสผ่าน
+                            </label>
+                        </div>
+
+                        <div class="remember-forgot">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="" id="remember">
+                                <label class="form-check-label" for="remember">
+                                    จดจำการเข้าสู่ระบบ
+                                </label>
+                            </div>
+                            <a href="#" class="forgot-link">ลืมรหัสผ่าน?</a>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-login w-100">
+                            <i class="fas fa-sign-in-alt me-2"></i>เข้าสู่ระบบ
+                        </button>
+                    </form>
+
+                    <div class="demo-credentials">
+                        <h6><i class="fas fa-key me-2"></i>ข้อมูลทดสอบ</h6>
+                        <div class="demo-item">
+                            <strong>ผู้ดูแลระบบ:</strong>
+                            <span>admin / admin123</span>
+                        </div>
+                        <div class="demo-item">
+                            <strong>ช่างเทคนิค:</strong>
+                            <span>technician / tech123</span>
+                        </div>
+                        <div class="demo-item">
+                            <strong>พนักงานขาย:</strong>
+                            <span>sales / sales123</span>
+                        </div>
                     </div>
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="remember_me" name="remember_me">
-                        <label class="form-check-label" for="remember_me">จดจำการเข้าสู่ระบบ</label>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">เข้าสู่ระบบ</button>
-                    </div>
-                </form>
-                <div class="text-center mt-3">
-                    <small class="text-muted">
-                        Demo: admin/admin123 | technician/tech123 | sales/sales123
-                    </small>
                 </div>
             </div>
         </div>
     </div>
-</div>
-{% endblock %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

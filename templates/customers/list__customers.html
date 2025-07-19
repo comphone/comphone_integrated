@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+
+{% block title %}รายชื่อลูกค้า - Comphone Integrated System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-users text-primary"></i> รายชื่อลูกค้า</h2>
+                    <p class="text-muted mb-0">จัดการข้อมูลลูกค้าทั้งหมด</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('customers.add_customer') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> เพิ่มลูกค้าใหม่
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">ค้นหาลูกค้า</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   placeholder="ค้นหาชื่อ, อีเมล, หรือโทรศัพท์..." 
+                                   value="{{ request.args.get('search', '') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="sort_by" class="form-label">เรียงตาม</label>
+                            <select class="form-select" id="sort_by" name="sort_by">
+                                <option value="created_at" {% if request.args.get('sort_by') == 'created_at' %}selected{% endif %}>วันที่สร้าง</option>
+                                <option value="first_name" {% if request.args.get('sort_by') == 'first_name' %}selected{% endif %}>ชื่อ</option>
+                                <option value="last_name" {% if request.args.get('sort_by') == 'last_name' %}selected{% endif %}>นามสกุล</option>
+                                <option value="email" {% if request.args.get('sort_by') == 'email' %}selected{% endif %}>อีเมล</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="order" class="form-label">ลำดับ</label>
+                            <select class="form-select" id="order" name="order">
+                                <option value="desc" {% if request.args.get('order') == 'desc' %}selected{% endif %}>ใหม่ล่าสุด</option>
+                                <option value="asc" {% if request.args.get('order') == 'asc' %}selected{% endif %}>เก่าสุด</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="fas fa-search"></i> ค้นหา
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Stats -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ customers.total if customers.has_prev or customers.has_next else customers.items|length }}</h4>
+                            <p class="mb-0">ลูกค้าทั้งหมด</p>
+                        </div>
+                        <div>
+                            <i class="fas fa-users fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ new_customers_count if new_customers_count is defined else 0 }}</h4>
+                            <p class="mb-0">ลูกค้าใหม่เดือนนี้</p>
+                        </div>
+                        <div>
+                            <i class="fas fa-user-plus fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ active_customers_count if active_customers_count is defined else 0 }}</h4>
+                            <p class="mb-0">ลูกค้าที่มีงานบริการ</p>
+                        </div>
+                        <div>
+                            <i class="fas fa-tools fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ customers_with_devices_count if customers_with_devices_count is defined else 0 }}</h4>
+                            <p class="mb-0">ลูกค้าที่มีอุปกรณ์</p>
+                        </div>
+                        <div>
+                            <i class="fas fa-mobile-alt fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customers Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>รายการลูกค้า
+                        {% if customers.items %}
+                            <span class="badge bg-secondary">{{ customers.items|length }} รายการ</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if customers.items %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>ชื่อ-นามสกุล</th>
+                                        <th>อีเมล</th>
+                                        <th>โทรศัพท์</th>
+                                        <th>จำนวนอุปกรณ์</th>
+                                        <th>งานบริการ</th>
+                                        <th>วันที่สร้าง</th>
+                                        <th>จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for customer in customers.items %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-light text-dark">#{{ customer.id }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar bg-primary text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                    <i class="fas fa-user"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold">{{ customer.full_name }}</div>
+                                                    {% if customer.notes %}
+                                                        <small class="text-muted">{{ customer.notes[:50] }}{% if customer.notes|length > 50 %}...{% endif %}</small>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if customer.email %}
+                                                <a href="mailto:{{ customer.email }}" class="text-decoration-none">
+                                                    <i class="fas fa-envelope me-1"></i>{{ customer.email }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if customer.phone %}
+                                                <a href="tel:{{ customer.phone }}" class="text-decoration-none">
+                                                    <i class="fas fa-phone me-1"></i>{{ customer.phone }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ customer.devices.count() }}</span>
+                                        </td>
+                                        <td>
+                                            {% set active_jobs = customer.service_jobs.filter_by(status='in_progress').count() %}
+                                            {% set total_jobs = customer.service_jobs.count() %}
+                                            <span class="badge bg-{{ 'warning' if active_jobs > 0 else 'secondary' }}">
+                                                {{ active_jobs }}/{{ total_jobs }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ customer.created_at.strftime('%d/%m/%Y') }}<br>
+                                                {{ customer.created_at.strftime('%H:%M') }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('customers.view_customer', customer_id=customer.id) }}" 
+                                                   class="btn btn-sm btn-outline-info" title="ดูรายละเอียด">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{{ url_for('customers.edit_customer', customer_id=customer.id) }}" 
+                                                   class="btn btn-sm btn-outline-warning" title="แก้ไข">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                        onclick="deleteCustomer({{ customer.id }}, '{{ customer.full_name }}')" 
+                                                        title="ลบ">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if customers.pages > 1 %}
+                        <nav aria-label="การแบ่งหน้า">
+                            <ul class="pagination justify-content-center">
+                                {% if customers.has_prev %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('customers.list_customers', page=customers.prev_num, **request.args) }}">
+                                            <i class="fas fa-chevron-left"></i> ก่อนหน้า
+                                        </a>
+                                    </li>
+                                {% endif %}
+
+                                {% for page_num in customers.iter_pages() %}
+                                    {% if page_num %}
+                                        {% if page_num != customers.page %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('customers.list_customers', page=page_num, **request.args) }}">{{ page_num }}</a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ page_num }}</span>
+                                            </li>
+                                        {% endif %}
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if customers.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('customers.list_customers', page=customers.next_num, **request.args) }}">
+                                            ถัดไป <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">ไม่พบข้อมูลลูกค้า</h5>
+                            <p class="text-muted">ยังไม่มีลูกค้าในระบบ หรือผลการค้นหาไม่พบข้อมูล</p>
+                            <a href="{{ url_for('customers.add_customer') }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> เพิ่มลูกค้าใหม่
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle"></i> ยืนยันการลบ
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>คุณแน่ใจหรือไม่ที่ต้องการลบลูกค้า <strong id="customerName"></strong>?</p>
+                <p class="text-muted small">การลบนี้ไม่สามารถย้อนกลับได้ และจะลบข้อมูลที่เกี่ยวข้องทั้งหมด เช่น อุปกรณ์ และประวัติการบริการ</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash"></i> ลบลูกค้า
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let customerToDelete = null;
+
+function deleteCustomer(customerId, customerName) {
+    customerToDelete = customerId;
+    document.getElementById('customerName').textContent = customerName;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+document.getElementById('confirmDelete').addEventListener('click', function() {
+    if (customerToDelete) {
+        fetch(`/customers/${customerToDelete}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showAlert('ลบลูกค้าเรียบร้อยแล้ว', 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showAlert('เกิดข้อผิดพลาด: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('เกิดข้อผิดพลาดในการลบลูกค้า', 'error');
+        });
+        
+        bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+        customerToDelete = null;
+    }
+});
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-' + (type === 'error' ? 'danger' : type) + ' alert-dismissible fade show position-fixed';
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = 
+        '<strong>' + (type === 'success' ? 'สำเร็จ!' : 'ข้อผิดพลาด!') + '</strong> ' + message +
+        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(function() {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Auto-submit search form on input change
+document.getElementById('search').addEventListener('input', function() {
+    if (this.value.length >= 3 || this.value.length === 0) {
+        setTimeout(() => {
+            this.form.submit();
+        }, 500);
+    }
+});
+</script>
+{% endblock %}

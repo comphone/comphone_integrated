@@ -1,21 +1,622 @@
-<!-- ============================================================================ -->
-<!-- templates/service_jobs/list.html - Fixed Service Jobs List -->
-<!-- ============================================================================ -->
-{% extends "base.html" %}
-{% block title %}งานซ่อม - {{ business_name }}{% endblock %}
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3">งานซ่อม</h1>
-    <button class="btn btn-primary">
-        <i class="fas fa-plus me-2"></i>สร้างงานซ่อมใหม่
-    </button>
-</div>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>งานบริการ - Comphone Service Center</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --info-color: #17a2b8;
+        }
 
-<div class="card">
-    <div class="card-body text-center">
-        <i class="fas fa-wrench fa-3x text-muted mb-3"></i>
-        <h5>ระบบงานซ่อม</h5>
-        <p class="text-muted">ฟีเจอร์กำลังพัฒนา - รายการงานซ่อมจะแสดงที่นี่</p>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
+            color: white;
+            transition: all 0.3s;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h3 {
+            margin: 0;
+            font-weight: 600;
+            color: #ecf0f1;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .sidebar-menu a {
+            display: block;
+            padding: 1rem 1.5rem;
+            color: #bdc3c7;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            padding-left: 2rem;
+        }
+
+        .sidebar-menu i {
+            width: 20px;
+            margin-right: 10px;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 0;
+            transition: margin-left 0.3s;
+        }
+
+        .top-navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .content-wrapper {
+            padding: 0 2rem 2rem 2rem;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #3498db 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .status-badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending { background-color: #fff3cd; color: #856404; }
+        .status-in-progress { background-color: #cce5ff; color: #004085; }
+        .status-completed { background-color: #d4edda; color: #155724; }
+        .status-cancelled { background-color: #f8d7da; color: #721c24; }
+
+        .job-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .job-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        }
+
+        .job-card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .job-card-body {
+            padding: 1.5rem;
+        }
+
+        .filter-section {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #2980b9 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 0.5rem 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: -250px;
+            }
+            
+            .sidebar.show {
+                margin-left: 0;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-mobile-alt"></i> Comphone</h3>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('customers') }}"><i class="fas fa-users"></i> ลูกค้า</a></li>
+            <li><a href="{{ url_for('service_jobs') }}" class="active"><i class="fas fa-tools"></i> งานบริการ</a></li>
+            <li><a href="{{ url_for('products') }}"><i class="fas fa-box"></i> สินค้า</a></li>
+            <li><a href="{{ url_for('sales') }}"><i class="fas fa-shopping-cart"></i> ขายสินค้า</a></li>
+            <li><a href="{{ url_for('inventory') }}"><i class="fas fa-warehouse"></i> คลังสินค้า</a></li>
+            <li><a href="{{ url_for('reports') }}"><i class="fas fa-chart-bar"></i> รายงาน</a></li>
+            <li><a href="{{ url_for('invoices') }}"><i class="fas fa-file-invoice"></i> บิล/ใบเสร็จ</a></li>
+            {% if current_user.role.value == 'admin' %}
+            <li><a href="{{ url_for('users') }}"><i class="fas fa-user-cog"></i> จัดการผู้ใช้</a></li>
+            <li><a href="{{ url_for('settings') }}"><i class="fas fa-cog"></i> ตั้งค่าระบบ</a></li>
+            {% endif %}
+        </ul>
     </div>
-</div>
-{% endblock %}
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navigation -->
+        <div class="top-navbar d-flex justify-content-between align-items-center">
+            <div>
+                <button class="btn btn-link d-md-none" id="toggleSidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h4 class="mb-0 d-inline-block ms-2">งานบริการ</h4>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-user"></i> {{ current_user.username }}
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="mb-2"><i class="fas fa-tools"></i> จัดการงานบริการ</h1>
+                        <p class="mb-0">ระบบจัดการงานซ่อมแซมและบริการอุปกรณ์</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#newJobModal">
+                            <i class="fas fa-plus"></i> เพิ่มงานใหม่
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-number text-warning">{{ stats.pending or 0 }}</div>
+                    <div class="text-muted">รอดำเนินการ</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number text-info">{{ stats.in_progress or 0 }}</div>
+                    <div class="text-muted">กำลังดำเนินการ</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number text-success">{{ stats.completed or 0 }}</div>
+                    <div class="text-muted">เสร็จสิ้น</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number text-danger">{{ stats.cancelled or 0 }}</div>
+                    <div class="text-muted">ยกเลิก</div>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">ค้นหา</label>
+                        <input type="text" class="form-control" name="search" value="{{ request.args.get('search', '') }}" placeholder="รหัสงาน, ลูกค้า, หรืออุปกรณ์">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">สถานะ</label>
+                        <select class="form-control" name="status">
+                            <option value="">ทั้งหมด</option>
+                            <option value="pending" {{ 'selected' if request.args.get('status') == 'pending' }}>รอดำเนินการ</option>
+                            <option value="in_progress" {{ 'selected' if request.args.get('status') == 'in_progress' }}>กำลังดำเนินการ</option>
+                            <option value="completed" {{ 'selected' if request.args.get('status') == 'completed' }}>เสร็จสิ้น</option>
+                            <option value="cancelled" {{ 'selected' if request.args.get('status') == 'cancelled' }}>ยกเลิก</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">ช่างเทคนิค</label>
+                        <select class="form-control" name="technician">
+                            <option value="">ทั้งหมด</option>
+                            {% for tech in technicians %}
+                            <option value="{{ tech.id }}" {{ 'selected' if request.args.get('technician') == tech.id|string }}>{{ tech.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">วันที่เริ่ม</label>
+                        <input type="date" class="form-control" name="date_from" value="{{ request.args.get('date_from', '') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">วันที่สิ้นสุด</label>
+                        <input type="date" class="form-control" name="date_to" value="{{ request.args.get('date_to', '') }}">
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Jobs List -->
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>รหัสงาน</th>
+                                <th>ลูกค้า</th>
+                                <th>อุปกรณ์</th>
+                                <th>ปัญหา</th>
+                                <th>ช่างเทคนิค</th>
+                                <th>สถานะ</th>
+                                <th>วันที่รับ</th>
+                                <th>วันที่คาดว่าเสร็จ</th>
+                                <th>ราคา</th>
+                                <th>จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for job in service_jobs %}
+                            <tr>
+                                <td>
+                                    <strong class="text-primary">#{{ job.id }}</strong>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ job.customer.name }}</strong><br>
+                                        <small class="text-muted">{{ job.customer.phone }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ job.device.brand }} {{ job.device.model }}</strong><br>
+                                        <small class="text-muted">{{ job.device.device_type }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-wrap" style="max-width: 200px;">{{ job.problem_description[:50] }}{% if job.problem_description|length > 50 %}...{% endif %}</span>
+                                </td>
+                                <td>
+                                    {% if job.assigned_technician %}
+                                        <span class="badge bg-info">{{ job.assigned_technician.username }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">ยังไม่มอบหมาย</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% set status_class = {
+                                        'pending': 'status-pending',
+                                        'in_progress': 'status-in-progress', 
+                                        'completed': 'status-completed',
+                                        'cancelled': 'status-cancelled'
+                                    } %}
+                                    {% set status_text = {
+                                        'pending': 'รอดำเนินการ',
+                                        'in_progress': 'กำลังดำเนินการ',
+                                        'completed': 'เสร็จสิ้น', 
+                                        'cancelled': 'ยกเลิก'
+                                    } %}
+                                    <span class="status-badge {{ status_class.get(job.status.value if job.status else 'pending', 'status-pending') }}">
+                                        {{ status_text.get(job.status.value if job.status else 'pending', 'รอดำเนินการ') }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small>{{ job.created_at.strftime('%d/%m/%Y') if job.created_at else '-' }}</small>
+                                </td>
+                                <td>
+                                    <small>{{ job.expected_completion_date.strftime('%d/%m/%Y') if job.expected_completion_date else '-' }}</small>
+                                </td>
+                                <td>
+                                    <strong class="text-success">฿{{ "{:,.2f}".format(job.estimated_cost or 0) }}</strong>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewJob({{ job.id }})" title="ดูรายละเอียด">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" onclick="editJob({{ job.id }})" title="แก้ไข">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        {% if current_user.role.value == 'admin' %}
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteJob({{ job.id }})" title="ลบ">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="10" class="text-center py-4">
+                                    <i class="fas fa-tools fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">ไม่มีงานบริการ</h5>
+                                    <p class="text-muted">คลิก "เพิ่มงานใหม่" เพื่อเริ่มต้น</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            {% if service_jobs.pages > 1 %}
+            <nav aria-label="Page navigation" class="mt-3">
+                <ul class="pagination justify-content-center">
+                    {% if service_jobs.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('service_jobs', page=service_jobs.prev_num, **request.args) }}">ก่อนหน้า</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in service_jobs.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != service_jobs.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('service_jobs', page=page_num, **request.args) }}">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if service_jobs.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('service_jobs', page=service_jobs.next_num, **request.args) }}">ถัดไป</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- New Job Modal -->
+    <div class="modal fade" id="newJobModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-plus"></i> เพิ่มงานบริการใหม่</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('create_service_job') }}">
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">เลือกลูกค้า *</label>
+                                <select class="form-control" name="customer_id" required>
+                                    <option value="">-- เลือกลูกค้า --</option>
+                                    {% for customer in customers %}
+                                    <option value="{{ customer.id }}">{{ customer.name }} ({{ customer.phone }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">เลือกอุปกรณ์ *</label>
+                                <select class="form-control" name="device_id" required>
+                                    <option value="">-- เลือกอุปกรณ์ --</option>
+                                    <!-- จะถูกอัปเดตผ่าน JavaScript เมื่อเลือกลูกค้า -->
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">ปัญหาที่พบ *</label>
+                                <textarea class="form-control" name="problem_description" rows="3" required placeholder="อธิบายปัญหาที่พบ..."></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">ช่างที่รับผิดชอบ</label>
+                                <select class="form-control" name="assigned_technician_id">
+                                    <option value="">-- มอบหมายทีหลัง --</option>
+                                    {% for tech in technicians %}
+                                    <option value="{{ tech.id }}">{{ tech.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">วันที่คาดว่าเสร็จ</label>
+                                <input type="date" class="form-control" name="expected_completion_date">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">ราคาประเมิน (บาท)</label>
+                                <input type="number" class="form-control" name="estimated_cost" step="0.01" placeholder="0.00">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">สถานะ</label>
+                                <select class="form-control" name="status">
+                                    <option value="pending">รอดำเนินการ</option>
+                                    <option value="in_progress">กำลังดำเนินการ</option>
+                                    <option value="completed">เสร็จสิ้น</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">หมายเหตุ</label>
+                                <textarea class="form-control" name="notes" rows="2" placeholder="หมายเหตุเพิ่มเติม..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> บันทึกงาน
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle Sidebar
+        document.getElementById('toggleSidebar')?.addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('show');
+        });
+
+        // Job Management Functions
+        function viewJob(jobId) {
+            // Redirect to job detail page
+            window.location.href = `/service-jobs/${jobId}`;
+        }
+
+        function editJob(jobId) {
+            // Redirect to job edit page
+            window.location.href = `/service-jobs/${jobId}/edit`;
+        }
+
+        function deleteJob(jobId) {
+            if (confirm('คุณแน่ใจหรือไม่ที่จะลบงานนี้?')) {
+                fetch(`/service-jobs/${jobId}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('เกิดข้อผิดพลาด: ' + data.message);
+                    }
+                });
+            }
+        }
+
+        // Customer Device Loading
+        document.addEventListener('DOMContentLoaded', function() {
+            const customerSelect = document.querySelector('select[name="customer_id"]');
+            const deviceSelect = document.querySelector('select[name="device_id"]');
+
+            if (customerSelect && deviceSelect) {
+                customerSelect.addEventListener('change', function() {
+                    const customerId = this.value;
+                    deviceSelect.innerHTML = '<option value="">-- เลือกอุปกรณ์ --</option>';
+                    
+                    if (customerId) {
+                        fetch(`/api/customers/${customerId}/devices`)
+                            .then(response => response.json())
+                            .then(devices => {
+                                devices.forEach(device => {
+                                    const option = document.createElement('option');
+                                    option.value = device.id;
+                                    option.textContent = `${device.brand} ${device.model} (${device.device_type})`;
+                                    deviceSelect.appendChild(option);
+                                });
+                            })
+                            .catch(error => {
+                                console.error('Error loading devices:', error);
+                            });
+                    }
+                });
+            }
+        });
+
+        // Auto-refresh every 5 minutes
+        setTimeout(() => {
+            location.reload();
+        }, 300000);
+    </script>
+</body>
+</html>

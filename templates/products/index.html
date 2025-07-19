@@ -1,0 +1,1004 @@
+<!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 text-gray-800 mb-0">
+                        <i class="fas fa-boxes me-2 text-primary"></i>จัดการสินค้า
+                    </h1>
+                    <p class="text-muted mb-0">บริหารจัดการสินค้า สต็อก และราคา</p>
+                </div>
+                <div class="d-flex gap-3 align-items-center">
+                    <div class="view-toggle">
+                        <button class="view-btn active" data-view="grid">
+                            <i class="fas fa-th me-2"></i>Grid
+                        </button>
+                        <button class="view-btn" data-view="table">
+                            <i class="fas fa-list me-2"></i>Table
+                        </button>
+                    </div>
+                    <button class="btn btn-success btn-add-product" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                        <i class="fas fa-plus me-2"></i>เพิ่มสินค้าใหม่
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-cards">
+        <div class="stats-card">
+            <div class="stats-icon" style="background: linear-gradient(135deg, #3b82f6, #1e40af);">
+                <i class="fas fa-boxes"></i>
+            </div>
+            <div class="stats-number">{{ products|length or 0 }}</div>
+            <div class="stats-label">สินค้าทั้งหมด</div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stats-number">{{ in_stock_products or 0 }}</div>
+            <div class="stats-label">สินค้าพร้อมขาย</div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stats-number">{{ low_stock_products or 0 }}</div>
+            <div class="stats-label">สต็อกต่ำ</div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                <i class="fas fa-times-circle"></i>
+            </div>
+            <div class="stats-number">{{ out_of_stock_products or 0 }}</div>
+            <div class="stats-label">สินค้าหมด</div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="stats-number">{{ "{:,.0f}".format(total_value or 0) }}</div>
+            <div class="stats-label">มูลค่าสต็อก (฿)</div>
+        </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="category-tabs">
+        <button class="category-tab active" data-category="all">
+            <i class="fas fa-list me-2"></i>ทั้งหมด
+        </button>
+        <button class="category-tab" data-category="accessories">
+            <i class="fas fa-plug me-2"></i>อุปกรณ์เสริม
+        </button>
+        <button class="category-tab" data-category="cases">
+            <i class="fas fa-mobile-alt me-2"></i>เคส
+        </button>
+        <button class="category-tab" data-category="chargers">
+            <i class="fas fa-battery-full me-2"></i>อแดปเตอร์
+        </button>
+        <button class="category-tab" data-category="screen_protectors">
+            <i class="fas fa-shield-alt me-2"></i>ฟิล์มกันรอย
+        </button>
+        <button class="category-tab" data-category="parts">
+            <i class="fas fa-cogs me-2"></i>อะไหล่
+        </button>
+        <button class="category-tab" data-category="tools">
+            <i class="fas fa-tools me-2"></i>เครื่องมือ
+        </button>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="search-box">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-search text-muted me-3"></i>
+                        <input type="text" class="search-input" placeholder="ค้นหาสินค้า... (ชื่อ, SKU, รุ่น)" id="productSearch">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 mb-3">
+                <select class="form-control" id="stockFilter">
+                    <option value="">สถานะสต็อก</option>
+                    <option value="in_stock">มีสินค้า</option>
+                    <option value="low_stock">สต็อกต่ำ</option>
+                    <option value="out_of_stock">สินค้าหมด</option>
+                </select>
+            </div>
+            <div class="col-md-2 mb-3">
+                <select class="form-control" id="priceRangeFilter">
+                    <option value="">ช่วงราคา</option>
+                    <option value="0-100">0 - 100 ฿</option>
+                    <option value="101-500">101 - 500 ฿</option>
+                    <option value="501-1000">501 - 1,000 ฿</option>
+                    <option value="1001-5000">1,001 - 5,000 ฿</option>
+                    <option value="5001+">5,001+ ฿</option>
+                </select>
+            </div>
+            <div class="col-md-2 mb-3">
+                <select class="form-control" id="sortBy">
+                    <option value="name">เรียงตาม</option>
+                    <option value="name">ชื่อสินค้า</option>
+                    <option value="price_asc">ราคา (ต่ำ-สูง)</option>
+                    <option value="price_desc">ราคา (สูง-ต่ำ)</option>
+                    <option value="stock">จำนวนสต็อก</option>
+                    <option value="created">วันที่เพิ่ม</option>
+                </select>
+            </div>
+            <div class="col-md-2 mb-3">
+                <button class="btn btn-outline-primary w-100" onclick="exportProducts()">
+                    <i class="fas fa-download me-2"></i>ส่งออก
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="bulk-actions" id="bulkActions">
+        <div>
+            <span id="selectedCount">0</span> รายการที่เลือก
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary btn-sm" onclick="bulkEdit()">
+                <i class="fas fa-edit me-1"></i>แก้ไขทั้งหมด
+            </button>
+            <button class="btn btn-outline-danger btn-sm" onclick="bulkDelete()">
+                <i class="fas fa-trash me-1"></i>ลบทั้งหมด
+            </button>
+        </div>
+    </div>
+
+    <!-- Grid View -->
+    <div id="gridView" class="view-content">
+        <div class="row" id="productsList">
+            {% if products %}
+                {% for product in products %}
+                <div class="col-xl-3 col-lg-4 col-md-6 mb-4 product-item" 
+                     data-name="{{ product.name|lower }}"
+                     data-sku="{{ product.sku|lower }}"
+                     data-category="{{ product.category|lower }}"
+                     data-stock="{{ 'in_stock' if product.stock_quantity > product.min_stock_level else 'low_stock' if product.stock_quantity > 0 else 'out_of_stock' }}"
+                     data-price="{{ product.price }}">
+                    <div class="product-card">
+                        <div class="product-image">
+                            {% if product.image %}
+                                <img src="{{ product.image }}" alt="{{ product.name }}">
+                            {% else %}
+                                <i class="fas fa-box placeholder-icon"></i>
+                            {% endif %}
+                            <div class="product-stock-badge {{ 'stock-in' if product.stock_quantity > product.min_stock_level else 'stock-low' if product.stock_quantity > 0 else 'stock-out' }}">
+                                {{ product.stock_quantity }} ชิ้น
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <div class="form-check position-absolute" style="top: 10px; left: 10px;">
+                                <input class="form-check-input product-checkbox" type="checkbox" value="{{ product.id }}">
+                            </div>
+                            
+                            <h5 class="product-name">{{ product.name }}</h5>
+                            <div class="product-sku">SKU: {{ product.sku }}</div>
+                            <div class="product-price">{{ "{:,.0f}".format(product.price) }} ฿</div>
+                            
+                            <div class="product-meta">
+                                <span>
+                                    <i class="fas fa-tag me-1"></i>{{ product.category|title if product.category else 'ไม่ระบุ' }}
+                                </span>
+                                <span>
+                                    <i class="fas fa-star me-1"></i>{{ product.rating or '0.0' }}
+                                </span>
+                            </div>
+                            
+                            <div class="product-actions">
+                                <button class="btn-action btn-view" onclick="viewProduct({{ product.id }})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn-action btn-edit" onclick="editProduct({{ product.id }})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-action btn-delete" onclick="deleteProduct({{ product.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="fas fa-boxes"></i>
+                        <h4>ยังไม่มีสินค้า</h4>
+                        <p>เริ่มต้นด้วยการเพิ่มสินค้าแรกของคุณ</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                            <i class="fas fa-plus me-2"></i>เพิ่มสินค้าใหม่
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Table View -->
+    <div id="tableView" class="view-content table-view" style="display: none;">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th width="40">
+                        <input type="checkbox" id="selectAll">
+                    </th>
+                    <th width="80">รูป</th>
+                    <th>ชื่อสินค้า</th>
+                    <th>SKU</th>
+                    <th>หมวดหมู่</th>
+                    <th>ราคา</th>
+                    <th>สต็อก</th>
+                    <th>สถานะ</th>
+                    <th width="120">จัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if products %}
+                    {% for product in products %}
+                    <tr class="product-row" data-id="{{ product.id }}">
+                        <td>
+                            <input type="checkbox" class="product-checkbox" value="{{ product.id }}">
+                        </td>
+                        <td>
+                            <div style="width: 50px; height: 50px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                {% if product.image %}
+                                    <img src="{{ product.image }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+                                {% else %}
+                                    <i class="fas fa-box text-muted"></i>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-bold">{{ product.name }}</div>
+                            <small class="text-muted">{{ product.description[:50] if product.description else '' }}...</small>
+                        </td>
+                        <td>{{ product.sku }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ product.category|title if product.category else 'ไม่ระบุ' }}</span>
+                        </td>
+                        <td class="fw-bold text-success">{{ "{:,.0f}".format(product.price) }} ฿</td>
+                        <td>
+                            <span class="fw-bold">{{ product.stock_quantity }}</span>
+                            <small class="text-muted">/ {{ product.min_stock_level }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if product.stock_quantity > product.min_stock_level else 'warning' if product.stock_quantity > 0 else 'danger' }}">
+                                {{ 'มีสินค้า' if product.stock_quantity > product.min_stock_level else 'สต็อกต่ำ' if product.stock_quantity > 0 else 'หมดสต็อก' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewProduct({{ product.id }})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning" onclick="editProduct({{ product.id }})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct({{ product.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center py-5">
+                            <i class="fas fa-boxes fa-3x text-muted mb-3"></i>
+                            <h5>ยังไม่มีสินค้า</h5>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                                <i class="fas fa-plus me-2"></i>เพิ่มสินค้าใหม่
+                            </button>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content" style="border-radius: 15px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>เพิ่มสินค้าใหม่
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="addProductForm">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-box me-2 text-primary"></i>ชื่อสินค้า
+                                    </label>
+                                    <input type="text" class="form-control" name="name" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-barcode me-2 text-primary"></i>SKU
+                                    </label>
+                                    <input type="text" class="form-control" name="sku" required>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-tag me-2 text-primary"></i>หมวดหมู่
+                                    </label>
+                                    <select class="form-control" name="category" required>
+                                        <option value="">เลือกหมวดหมู่</option>
+                                        <option value="accessories">อุปกรณ์เสริม</option>
+                                        <option value="cases">เคส</option>
+                                        <option value="chargers">อแดปเตอร์</option>
+                                        <option value="screen_protectors">ฟิล์มกันรอย</option>
+                                        <option value="parts">อะไหล่</option>
+                                        <option value="tools">เครื่องมือ</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-industry me-2 text-primary"></i>ยี่ห้อ
+                                    </label>
+                                    <input type="text" class="form-control" name="brand">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-align-left me-2 text-primary"></i>รายละเอียดสินค้า
+                                </label>
+                                <textarea class="form-control" name="description" rows="3"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-image me-2 text-primary"></i>รูปภาพสินค้า
+                                </label>
+                                <div class="border rounded" style="height: 200px; display: flex; align-items: center; justify-content: center; background: #f8fafc;">
+                                    <div class="text-center">
+                                        <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                                        <div class="text-muted">คลิกเพื่ออัปโหลดรูป</div>
+                                        <input type="file" class="form-control mt-2" name="image" accept="image/*">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-money-bill me-2 text-primary"></i>ราคาขาย (฿)
+                            </label>
+                            <input type="number" class="form-control" name="price" step="0.01" min="0" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-shopping-cart me-2 text-primary"></i>ราคาทุน (฿)
+                            </label>
+                            <input type="number" class="form-control" name="cost_price" step="0.01" min="0">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-warehouse me-2 text-primary"></i>จำนวนสต็อก
+                            </label>
+                            <input type="number" class="form-control" name="stock_quantity" min="0" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-exclamation-triangle me-2 text-primary"></i>สต็อกขั้นต่ำ
+                            </label>
+                            <input type="number" class="form-control" name="min_stock_level" min="0" value="5">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-map-marker-alt me-2 text-primary"></i>ตำแหน่งในคลัง
+                            </label>
+                            <input type="text" class="form-control" name="location" placeholder="เช่น A1-B2">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-weight me-2 text-primary"></i>น้ำหนัก (กรัม)
+                            </label>
+                            <input type="number" class="form-control" name="weight" min="0" step="0.1">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_active" checked>
+                                <label class="form-check-label">
+                                    <i class="fas fa-toggle-on me-2"></i>เปิดขายสินค้านี้
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-success" onclick="saveProduct()">
+                    <i class="fas fa-save me-2"></i>บันทึก
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// View toggle
+document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const view = this.dataset.view;
+        
+        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        document.getElementById('gridView').style.display = view === 'grid' ? 'block' : 'none';
+        document.getElementById('tableView').style.display = view === 'table' ? 'block' : 'none';
+    });
+});
+
+// Category filter
+document.querySelectorAll('.category-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        
+        const category = this.dataset.category;
+        filterProducts();
+    });
+});
+
+// Search functionality
+document.getElementById('productSearch').addEventListener('input', filterProducts);
+document.getElementById('stockFilter').addEventListener('change', filterProducts);
+document.getElementById('priceRangeFilter').addEventListener('change', filterProducts);
+
+function filterProducts() {
+    const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+    const stockFilter = document.getElementById('stockFilter').value;
+    const priceRange = document.getElementById('priceRangeFilter').value;
+    const category = document.querySelector('.category-tab.active').dataset.category;
+    
+    const products = document.querySelectorAll('.product-item, .product-row');
+    
+    products.forEach(product => {
+        let show = true;
+        
+        // Search filter
+        if (searchTerm) {
+            const name = product.dataset.name || '';
+            const sku = product.dataset.sku || '';
+            if (!name.includes(searchTerm) && !sku.includes(searchTerm)) {
+                show = false;
+            }
+        }
+        
+        // Category filter
+        if (category !== 'all') {
+            const productCategory = product.dataset.category || '';
+            if (productCategory !== category) {
+                show = false;
+            }
+        }
+        
+        // Stock filter
+        if (stockFilter) {
+            const stock = product.dataset.stock || '';
+            if (stock !== stockFilter) {
+                show = false;
+            }
+        }
+        
+        // Price range filter
+        if (priceRange) {
+            const price = parseFloat(product.dataset.price || 0);
+            const [min, max] = priceRange.split('-').map(p => p.replace('+', ''));
+            
+            if (max) {
+                if (price < parseFloat(min) || price > parseFloat(max)) {
+                    show = false;
+                }
+            } else {
+                if (price < parseFloat(min)) {
+                    show = false;
+                }
+            }
+        }
+        
+        product.style.display = show ? 'block' : 'none';
+    });
+}
+
+// Checkbox handling
+document.querySelectorAll('.product-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', updateBulkActions);
+});
+
+document.getElementById('selectAll')?.addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.product-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = this.checked;
+    });
+    updateBulkActions();
+});
+
+function updateBulkActions() {
+    const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
+    const bulkActions = document.getElementById('bulkActions');
+    const selectedCount = document.getElementById('selectedCount');
+    
+    if (checkedBoxes.length > 0) {
+        bulkActions.classList.add('show');
+        selectedCount.textContent = checkedBoxes.length;
+    } else {
+        bulkActions.classList.remove('show');
+    }
+}
+
+// Product actions
+function viewProduct(id) {
+    window.location.href = `/products/${id}`;
+}
+
+function editProduct(id) {
+    window.location.href = `/products/${id}/edit`;
+}
+
+function deleteProduct(id) {
+    if (confirm('คุณแน่ใจที่จะลบสินค้านี้?')) {
+        fetch(`/products/${id}`, {
+            method: 'DELETE',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('เกิดข้อผิดพลาดในการลบข้อมูล');
+            }
+        });
+    }
+}
+
+function saveProduct() {
+    const form = document.getElementById('addProductForm');
+    const formData = new FormData(form);
+    
+    fetch('/products', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+        }
+    });
+}
+
+function bulkEdit() {
+    const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
+    const ids = Array.from(checkedBoxes).map(cb => cb.value);
+    
+    if (ids.length === 0) return;
+    
+    // Open bulk edit modal
+    console.log('Bulk edit:', ids);
+}
+
+function bulkDelete() {
+    const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
+    const ids = Array.from(checkedBoxes).map(cb => cb.value);
+    
+    if (ids.length === 0) return;
+    
+    if (confirm(`คุณแน่ใจที่จะลบสินค้า ${ids.length} รายการ?`)) {
+        fetch('/products/bulk-delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ids: ids})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('เกิดข้อผิดพลาดในการลบข้อมูล');
+            }
+        });{% extends "base.html" %}
+
+{% block title %}จัดการสินค้า{% endblock %}
+
+{% block extra_css %}
+<style>
+    .product-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        border-color: #3b82f6;
+    }
+    
+    .product-image {
+        width: 100%;
+        height: 200px;
+        background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .product-image .placeholder-icon {
+        font-size: 3rem;
+        color: #cbd5e1;
+    }
+    
+    .product-stock-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .stock-in { background: #dcfce7; color: #16a34a; }
+    .stock-low { background: #fef3c7; color: #d97706; }
+    .stock-out { background: #fee2e2; color: #dc2626; }
+    
+    .product-info {
+        padding: 20px;
+    }
+    
+    .product-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1e40af;
+        margin-bottom: 8px;
+        line-height: 1.3;
+    }
+    
+    .product-sku {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-bottom: 12px;
+    }
+    
+    .product-price {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #059669;
+        margin-bottom: 15px;
+    }
+    
+    .product-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-bottom: 15px;
+    }
+    
+    .product-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-action {
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .btn-view {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .btn-view:hover {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .btn-edit {
+        background: #fef3c7;
+        color: #d97706;
+    }
+    
+    .btn-edit:hover {
+        background: #f59e0b;
+        color: white;
+    }
+    
+    .btn-delete {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+    
+    .btn-delete:hover {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        font-size: 1.2rem;
+        color: white;
+    }
+    
+    .stats-number {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1e40af;
+        margin-bottom: 5px;
+    }
+    
+    .stats-label {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 20px;
+    }
+    
+    .btn-add-product {
+        background: linear-gradient(135deg, #10b981, #059669);
+        border: none;
+        border-radius: 12px;
+        padding: 12px 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-add-product:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+    }
+    
+    .category-tabs {
+        background: white;
+        border-radius: 15px;
+        padding: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .category-tab {
+        border: none;
+        background: transparent;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        color: #6b7280;
+        white-space: nowrap;
+    }
+    
+    .category-tab.active {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .category-tab:not(.active):hover {
+        background: #f1f5f9;
+        color: #1e40af;
+    }
+    
+    .search-box {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border: 2px solid #e2e8f0;
+        padding: 15px 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .search-box:focus-within {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .search-input {
+        border: none;
+        outline: none;
+        width: 100%;
+        font-size: 1rem;
+        color: #374151;
+    }
+    
+    .search-input::placeholder {
+        color: #9ca3af;
+    }
+    
+    .view-toggle {
+        background: white;
+        border-radius: 12px;
+        padding: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: 1px solid #e2e8f0;
+        display: flex;
+        gap: 5px;
+    }
+    
+    .view-btn {
+        border: none;
+        background: transparent;
+        padding: 8px 15px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        color: #6b7280;
+        font-weight: 500;
+    }
+    
+    .view-btn.active {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .view-btn:not(.active):hover {
+        background: #f1f5f9;
+        color: #1e40af;
+    }
+    
+    .table-view {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+    }
+    
+    .table-view table {
+        margin: 0;
+    }
+    
+    .table-view th {
+        background: #f8fafc;
+        border: none;
+        color: #374151;
+        font-weight: 600;
+        padding: 15px 20px;
+    }
+    
+    .table-view td {
+        border: none;
+        padding: 15px 20px;
+        vertical-align: middle;
+    }
+    
+    .table-view tbody tr {
+        border-bottom: 1px solid #f1f5f9;
+        transition: background-color 0.3s ease;
+    }
+    
+    .table-view tbody tr:hover {
+        background: #f8fafc;
+    }
+    
+    .bulk-actions {
+        background: white;
+        border-radius: 15px;
+        padding: 15px 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 20px;
+        display: none;
+    }
+    
+    .bulk-actions.show {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6b7280;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        color: #d1d5db;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="
