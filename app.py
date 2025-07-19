@@ -1,4 +1,216 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
+# API Routes สำหรับ Quick Actions
+@app.route('/api/customers')
+@login_required
+def api_customers_list():
+    try:
+        customers = Customer.query.order_by(Customer.name).all()
+        customer_list = []
+        for customer in customers:
+            customer_list.append({
+                'id': customer.id,
+                'name': customer.name,
+                'phone': customer.phone,
+                'email': customer.email or ''
+            })
+        return jsonify(customer_list)
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+# Update create_service_job route เพื่อรองรับ Quick Add
+@app.route('/service-jobs', methods=['POST'])
+@login_required
+def create_service_job():
+    try:
+        # Get form data
+        customer_id = request.form.get('customer_id')
+        device_id = request.form.get('device_id')
+        problem_description = request.form.get('problem_description')
+        diagnosis = request.form.get('diagnosis')
+        priority = request.form.get('priority', 'medium')
+        assigned_technician_id = request.form.get('technician_id') or None
+        expected_completion_date = request.form.get('expected_completion_date')
+        estimated_cost = request.form.get('estimated_cost')
+        status = request.form.get('status', 'pending')
+        notes = request.form.get('notes')
+        
+        # สำหรับ Quick Add - สร้าง device ใหม่ถ้าไม่มี device_id
+        if not device_id and customer_id:
+            device_type = request.form.get('device_type', 'smartphone')
+            brand = request.form.get('brand', 'Unknown')
+            model = request.form.get('model', 'Unknown Model')
+            
+            # สร้าง device ใหม่
+            device = Device(
+                customer_id=customer_id,
+                device_type=device_type,
+                brand=brand,
+                model=model
+            )
+            db.session.add(device)
+            db.session.flush()  # Get device ID
+            device_id = device.id
+
+        # Create new service job
+        job = ServiceJob(
+            customer_id=customer_id,
+            device_id=device_id,
+            problem_description=problem_description,
+            diagnosis=diagnosis,
+            priority=priority,
+            assigned_technician_id=assigned_technician_id,
+            estimated_cost=float(estimated_cost) if estimated_cost else None,
+            status=ServiceJobStatus(status),
+            notes=notes
+        )
+        
+        if expected_completion_date:
+            job.expected_completion_date = datetime.strptime(expected_completion_date, '%Y-%m-%d').date()
+            job.estimated_completion_date = job.expected_completion_date
+        
+        db.session.add(job)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'เพิ่มงานบริการใหม่เรียบร้อยแล้ว', 'job_id': job.id})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+# API Routes
+@app.route('/api/customers/<int:customer_id>/devices')
+@login_required
+def api_customer_devices(customer_id):
+    try:
+        customer = Customer.query.get_or_404(customer_id)
+        devices = [{'id': d.id, 'name': f'{d.brand} {d.model} ({d.device_type})'} for d in customer.devices]
+        return jsonify({'success': True, 'devices': devices})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/products/<int:product_id>')
+@login_required
+def api_product_details(product_id):
+    try:
+        product = Product.query.get_or_404(product_id)
+        return jsonify({
+            'success': True,
+            'product': {
+                'id': product.id,
+                'name': product.name,
+                'price': product.price,
+                'stock_quantity': product.stock_quantity,
+                'sku': product.sku or ''
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/sales/last')
+@login_required
+def api_last_sale():
+    try:
+        last_sale = Sale.query.order_by(Sale.id.desc()).first()
+        if last_sale:
+            return jsonify({
+                'success': True,
+                'sale': {
+                    'id': last_sale.id,
+                    'total_amount': last_sale.total_amount,
+                    'created_at': last_sale.created_at.isoformat()
+                }
+            })
+        return jsonify({'success': True, 'sale': None})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/sales/unpaid')
+@login_required
+def api_unpaid_sales():
+    try:
+        unpaid_sales = Sale.query.filter_by(payment_status='pending').count()
+        return jsonify({'success': True, 'count': unpaid_sales})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/service-jobs/completed')
+@login_required
+def api_completed_jobs():
+    try:
+        completed_jobs = ServiceJob.query.filter_by(status=ServiceJobStatus.COMPLETED).count()
+        return jsonify({'success': True, 'count': completed_jobs})
+    except Exception as e:message': str(e)}), 500
+
+@app.route('/api/customers/<int:customer_id>/devices')
+@login_required
+def api_customer_devices(customer_id):
+    try:
+        customer = Customer.query.get_or_404(customer_id)
+        devices = []
+        for device in customer.devices:
+            devices.append({
+                'id': device.id, 
+                'name': f'{device.brand} {device.model} ({device.device_type})',
+                'brand': device.brand,
+                'model': device.model,
+                'serial_number': device.serial_number or ''
+            })
+        return jsonify({'success': True, 'devices': devices})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/products/<int:product_id>')
+@login_required
+def api_product_details(product_id):
+    try:
+        product = Product.query.get_or_404(product_id)
+        return jsonify({
+            'success': True,
+            'product': {
+                'id': product.id,
+                'name': product.name,
+                'price': product.price,
+                'stock_quantity': product.stock_quantity,
+                'sku': product.sku or ''
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/sales/last')
+@login_required
+def api_last_sale():
+    try:
+        last_sale = Sale.query.order_by(Sale.id.desc()).first()
+        if last_sale:
+            return jsonify({
+                'success': True,
+                'sale': {
+                    'id': last_sale.id,
+                    'total_amount': last_sale.total_amount,
+                    'created_at': last_sale.created_at.isoformat()
+                }
+            })
+        return jsonify({'success': True, 'sale': None})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/sales/unpaid')
+@login_required
+def api_unpaid_sales():
+    try:
+        unpaid_sales = Sale.query.filter_by(payment_status='pending').count()
+        return jsonify({'success': True, 'count': unpaid_sales})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/service-jobs/completed')
+@login_required
+def api_completed_jobs():
+    try:
+        completed_jobs = ServiceJob.query.filter_by(status=ServiceJobStatus.COMPLETED).count()
+        return jsonify({'success': True, 'count': completed_jobs})
+    except Exception as e:
+        return jsonify({'success': False, 'from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -206,7 +418,7 @@ class SystemSettings(db.Model):
 def load_user(user_id):
     return db.session.get(User, int(user_id))
 
-# Template Functions
+# Template Functions และ Context Processors
 @app.template_filter('user_role')
 def user_role_filter(role):
     if hasattr(role, 'value'):
@@ -249,6 +461,19 @@ def status_badge_filter(status):
     
     return f'<span class="badge {css_class}">{text}</span>'
 
+# Add context processors for templates
+@app.context_processor
+def inject_globals():
+    return {
+        'business_name': 'Comphone Service Center',
+        'business_phone': '02-123-4567',
+        'app_version': '1.0.0',
+        'current_year': datetime.now().year,
+        'now': datetime.now,
+        'moment': datetime
+    }
+
+# Add template globals
 @app.template_global()
 def moment():
     return datetime
@@ -259,7 +484,39 @@ def now():
 
 def render_template_placeholder(title, icon):
     """ฟังก์ชันสำหรับแสดงหน้าเมื่อเกิดข้อผิดพลาด"""
-    return render_template('main/placeholder.html', title=title, icon=icon, user=current_user)
+    # สร้าง HTML แบบง่ายๆ แทนการเรียก template ที่ไม่มี
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>{title} - Comphone Service Center</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container mt-5">
+            <div class="row justify-content-center">
+                <div class="col-md-6 text-center">
+                    <div class="card">
+                        <div class="card-body">
+                            <i class="{icon} fa-3x text-primary mb-3"></i>
+                            <h3>{title}</h3>
+                            <p class="text-muted">ฟีเจอร์นี้กำลังอยู่ระหว่างการพัฒนา</p>
+                            <a href="/dashboard" class="btn btn-primary">
+                                <i class="fas fa-home"></i> กลับหน้าหลัก
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    from flask import Response
+    return Response(html_content, mimetype='text/html')
 
 # Authentication Routes
 @app.route('/login', methods=['GET', 'POST'])

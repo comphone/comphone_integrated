@@ -3,445 +3,694 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Comphone Service Management{% endblock %}</title>
+    <title>{% block title %}{{ business_name }}{% endblock %}</title>
     
-    <!-- Bootstrap CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- DataTables CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     
     <style>
         :root {
-            --primary-color: #2563eb;
-            --secondary-color: #64748b;
-            --success-color: #059669;
-            --warning-color: #d97706;
-            --danger-color: #dc2626;
-            --sidebar-width: 250px;
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #0dcaf0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8fafc;
-        }
-
-        .sidebar {
-            width: var(--sidebar-width);
-            height: 100vh;
-            background: linear-gradient(180deg, #1e293b 0%, #334155 100%);
-            position: fixed;
-            left: 0;
-            top: 0;
-            z-index: 1000;
-            transition: all 0.3s ease;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-        }
-
-        .sidebar-header {
-            padding: 1.5rem 1rem;
-            border-bottom: 1px solid #475569;
-        }
-
-        .sidebar-header h4 {
-            color: white;
-            margin: 0;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .sidebar-menu {
-            padding: 1rem 0;
-        }
-
-        .sidebar-menu .nav-link {
-            color: #cbd5e1;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            transition: all 0.3s ease;
-            border-radius: 0;
-        }
-
-        .sidebar-menu .nav-link:hover,
-        .sidebar-menu .nav-link.active {
-            background-color: rgba(59, 130, 246, 0.1);
-            color: #60a5fa;
-            border-left: 3px solid #3b82f6;
-        }
-
-        .sidebar-menu .nav-link i {
-            width: 20px;
-            margin-right: 10px;
-        }
-
-        .main-content {
-            margin-left: var(--sidebar-width);
-            min-height: 100vh;
-            transition: all 0.3s ease;
-        }
-
-        .navbar {
-            background: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-bottom: 1px solid #e2e8f0;
+            font-family: 'Sarabun', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            font-size: 14px;
         }
 
         .navbar-brand {
-            font-weight: 600;
+            font-weight: bold;
             color: var(--primary-color) !important;
         }
 
-        .content-wrapper {
-            padding: 2rem;
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            margin: 2px 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: white;
+            background-color: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link i {
+            width: 20px;
+            text-align: center;
+            margin-right: 8px;
+        }
+
+        .main-content {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+            margin: 20px;
+            padding: 25px;
         }
 
         .card {
             border: none;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border-radius: 0.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 25px rgba(0,0,0,0.12);
         }
 
         .card-header {
-            background-color: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 15px 20px;
+            font-weight: 600;
         }
 
         .btn {
-            border-radius: 0.375rem;
+            border-radius: 8px;
             font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
         }
 
         .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
         }
 
-        .btn-primary:hover {
-            background-color: #1d4ed8;
-            border-color: #1d4ed8;
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border: none;
         }
 
-        .badge {
-            font-weight: 500;
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+            border: none;
         }
 
         .table {
-            font-size: 0.9rem;
+            border-radius: 8px;
+            overflow: hidden;
         }
 
-        .table th {
-            border-top: none;
-            background-color: #f8fafc;
+        .table thead th {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: none;
             font-weight: 600;
-            color: #475569;
+            color: #495057;
         }
 
-        /* Status badges */
-        .status-pending { background-color: #fbbf24; }
-        .status-in-progress { background-color: #3b82f6; }
-        .status-completed { background-color: #10b981; }
-        .status-cancelled { background-color: #ef4444; }
-
-        /* Priority badges */
-        .priority-low { background-color: #6b7280; }
-        .priority-medium { background-color: #f59e0b; }
-        .priority-high { background-color: #ef4444; }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .sidebar.show {
-                transform: translateX(0);
-            }
-            
-            .main-content {
-                margin-left: 0;
-            }
-            
-            .content-wrapper {
-                padding: 1rem;
-            }
+        .badge {
+            font-size: 0.75em;
+            font-weight: 500;
+            border-radius: 6px;
+            padding: 4px 8px;
         }
 
-        /* Custom scrollbar */
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
+        .alert {
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
         }
 
-        .sidebar::-webkit-scrollbar-track {
-            background: #1e293b;
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            transition: all 0.3s ease;
         }
 
-        .sidebar::-webkit-scrollbar-thumb {
-            background: #475569;
-            border-radius: 3px;
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
         }
 
-        /* Loading spinner */
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stats-card .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stats-card .stats-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .loading {
+            display: none;
+        }
+
         .spinner-border-sm {
             width: 1rem;
             height: 1rem;
         }
 
-        /* Form styling */
-        .form-control:focus,
-        .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                position: fixed;
+                z-index: 1050;
+                width: 250px;
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin: 10px;
+                padding: 15px;
+            }
         }
 
-        /* Alert styling */
-        .alert {
-            border: none;
-            border-radius: 0.5rem;
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            min-width: 18px;
+            text-align: center;
         }
 
-        /* Modal improvements */
-        .modal-header {
-            background-color: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
         }
 
-        /* Footer */
         .footer {
-            background-color: white;
-            border-top: 1px solid #e2e8f0;
-            padding: 1rem 2rem;
-            margin-top: auto;
-            color: #64748b;
-            font-size: 0.875rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            margin-top: 50px;
+        }
+
+        /* Purple color for waiting_parts status */
+        .bg-purple {
+            background-color: #8b5cf6 !important;
         }
     </style>
 
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Sidebar -->
-    <nav class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h4><i class="fas fa-mobile-alt me-2"></i>Comphone Service</h4>
-        </div>
-        
-        <div class="sidebar-menu">
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('dashboard') }}">
-                        <i class="fas fa-tachometer-alt"></i>หน้าหลัก
-                    </a>
-                </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('service_jobs') }}">
-                        <i class="fas fa-tools"></i>งานซ่อม
-                    </a>
-                </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('customers') }}">
-                        <i class="fas fa-users"></i>ลูกค้า
-                    </a>
-                </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('inventory') }}">
-                        <i class="fas fa-boxes"></i>คลังสินค้า
-                    </a>
-                </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('sales') }}">
-                        <i class="fas fa-shopping-cart"></i>ขาย
-                    </a>
-                </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('reports') }}">
-                        <i class="fas fa-chart-bar"></i>รายงาน
-                    </a>
-                </li>
-                
-                {% if current_user.role == 'admin' %}
-                <li class="nav-item mt-3">
-                    <h6 class="text-muted ms-3 mb-2" style="font-size: 0.75rem; text-transform: uppercase;">การจัดการ</h6>
-                </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('users') }}">
-                        <i class="fas fa-user-cog"></i>ผู้ใช้งาน
-                    </a>
-                </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('settings') }}">
-                        <i class="fas fa-cog"></i>ตั้งค่า
-                    </a>
-                </li>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+        <div class="container-fluid">
+            <button class="btn btn-outline-primary d-lg-none me-2" type="button" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+                <i class="fas fa-mobile-alt me-2"></i>{{ business_name }}
+            </a>
+
+            <div class="navbar-nav ms-auto d-flex flex-row">
+                {% if current_user.is_authenticated %}
+                    <form class="d-flex me-3" method="GET" action="{{ url_for('customers') }}">
+                        <input class="form-control form-control-sm" type="search" name="search" placeholder="ค้นหา..." style="width: 200px;">
+                        <button class="btn btn-outline-primary btn-sm ms-1" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+
+                    <div class="nav-item dropdown me-2">
+                        <a class="nav-link position-relative" href="#" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notificationCount">0</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end" style="width: 300px;">
+                            <h6 class="dropdown-header">การแจ้งเตือน</h6>
+                            <div id="notificationList">
+                                <div class="dropdown-item text-center text-muted">ไม่มีการแจ้งเตือน</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item text-center" href="#">
+                                ดูทั้งหมด
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown">
+                            <div class="user-avatar me-2">
+                                {{ current_user.username[0].upper() if current_user.username else 'U' }}
+                            </div>
+                            <span class="d-none d-md-inline">{{ current_user.username }}</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <h6 class="dropdown-header">
+                                {{ current_user.username }}<br>
+                                <small class="text-muted">{{ current_user.role|user_role }}</small>
+                            </h6>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{{ url_for('profile') }}">
+                                <i class="fas fa-user me-2"></i>ข้อมูลส่วนตัว
+                            </a>
+                            {% if current_user.role.value == 'admin' %}
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{{ url_for('settings') }}">
+                                <i class="fas fa-cog me-2"></i>ตั้งค่าระบบ
+                            </a>
+                            <a class="dropdown-item" href="{{ url_for('users') }}">
+                                <i class="fas fa-users me-2"></i>จัดการผู้ใช้
+                            </a>
+                            {% endif %}
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>ออกจากระบบ
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <a class="btn btn-primary btn-sm" href="{{ url_for('login') }}">เข้าสู่ระบบ</a>
                 {% endif %}
-            </ul>
+            </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Top Navbar -->
-        <nav class="navbar navbar-expand-lg">
-            <div class="container-fluid">
-                <button class="btn btn-outline-secondary d-lg-none me-2" type="button" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
-                </button>
-                
-                <span class="navbar-brand mb-0 h1">{% block page_title %}ระบบจัดการร้านซ่อมมือถือ{% endblock %}</span>
-                
-                <div class="navbar-nav ms-auto">
-                    <!-- Notifications -->
-                    <div class="nav-item dropdown me-3">
-                        <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-bell"></i>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                3
-                            </span>
+    <div class="container-fluid">
+        <div class="row">
+            {% if current_user.is_authenticated %}
+            <nav class="col-lg-2 sidebar p-0" id="sidebar">
+                <div class="p-3">
+                    <div class="nav flex-column">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'dashboard' }}" 
+                           href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-tachometer-alt"></i>แดชบอร์ด
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><h6 class="dropdown-header">การแจ้งเตือน</h6></li>
-                            <li><a class="dropdown-item" href="#">งานซ่อมใหม่ #12345</a></li>
-                            <li><a class="dropdown-item" href="#">สินค้าใกล่หมด: iPhone Screen</a></li>
-                            <li><a class="dropdown-item" href="#">ลูกค้ามารับเครื่อง</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-center" href="#">ดูทั้งหมด</a></li>
-                        </ul>
-                    </div>
-                    
-                    <!-- User Profile -->
-                    <div class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-2"></i>
-                            {{ current_user.username if current_user.is_authenticated else 'Guest' }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ url_for('profile') }}">
-                                <i class="fas fa-user me-2"></i>โปรไฟล์
-                            </a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('settings') }}">
-                                <i class="fas fa-cog me-2"></i>ตั้งค่า
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">
-                                <i class="fas fa-sign-out-alt me-2"></i>ออกจากระบบ
-                            </a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </nav>
 
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="container-fluid mt-3">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
+                        <a class="nav-link {{ 'active' if request.endpoint and 'customers' in request.endpoint }}" 
+                           href="{{ url_for('customers') }}">
+                            <i class="fas fa-users"></i>ลูกค้า
+                        </a>
+
+                        <a class="nav-link {{ 'active' if request.endpoint and 'service' in request.endpoint }}" 
+                           href="{{ url_for('service_jobs') }}">
+                            <i class="fas fa-wrench"></i>งานซ่อม
+                        </a>
+
+                        <a class="nav-link {{ 'active' if request.endpoint and 'products' in request.endpoint }}" 
+                           href="{{ url_for('products') }}">
+                            <i class="fas fa-box"></i>สินค้า
+                        </a>
+
+                        <a class="nav-link {{ 'active' if request.endpoint and 'sales' in request.endpoint }}" 
+                           href="{{ url_for('sales') }}">
+                            <i class="fas fa-cash-register"></i>ระบบขาย
+                        </a>
+
+                        <a class="nav-link {{ 'active' if request.endpoint and 'invoices' in request.endpoint }}" 
+                           href="{{ url_for('invoices') }}">
+                            <i class="fas fa-file-invoice"></i>ใบเสร็จ
+                        </a>
+
+                        <a class="nav-link {{ 'active' if request.endpoint and 'inventory' in request.endpoint }}" 
+                           href="{{ url_for('inventory') }}">
+                            <i class="fas fa-warehouse"></i>คลังสินค้า
+                        </a>
+
+                        <a class="nav-link {{ 'active' if request.endpoint and 'reports' in request.endpoint }}" 
+                           href="{{ url_for('reports') }}">
+                            <i class="fas fa-chart-bar"></i>รายงาน
+                        </a>
+
+                        {% if current_user.role.value == 'admin' %}
+                        <hr class="text-white-50 my-3">
+                        <small class="text-white-50 px-3 mb-2">ผู้ดูแลระบบ</small>
+                        
+                        <a class="nav-link {{ 'active' if request.endpoint == 'users' }}" 
+                           href="{{ url_for('users') }}">
+                            <i class="fas fa-user-cog"></i>จัดการผู้ใช้
+                        </a>
+
+                        <a class="nav-link {{ 'active' if request.endpoint == 'settings' }}" 
+                           href="{{ url_for('settings') }}">
+                            <i class="fas fa-cog"></i>ตั้งค่าระบบ
+                        </a>
+                        {% endif %}
+
+                        <hr class="text-white-50 my-3">
+                        <small class="text-white-50 px-3 mb-2">การดำเนินการ</small>
+                        
+                        <a class="nav-link" href="#" onclick="quickAddCustomer()">
+                            <i class="fas fa-user-plus"></i>เพิ่มลูกค้าด่วน
+                        </a>
+
+                        <a class="nav-link" href="#" onclick="quickAddJob()">
+                            <i class="fas fa-plus"></i>เพิ่มงานด่วน
+                        </a>
+                    </div>
                 </div>
+            </nav>
             {% endif %}
-        {% endwith %}
 
-        <!-- Page Content -->
-        <div class="content-wrapper">
-            {% block content %}{% endblock %}
-        </div>
+            <main class="col-lg-10 ms-sm-auto">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="container mt-3">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    {% if category == 'error' %}
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                    {% elif category == 'success' %}
+                                        <i class="fas fa-check-circle me-2"></i>
+                                    {% elif category == 'warning' %}
+                                        <i class="fas fa-exclamation-circle me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-info-circle me-2"></i>
+                                    {% endif %}
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
 
-        <!-- Footer -->
-        <footer class="footer">
-            <div class="container-fluid">
-                <div class="row">
-                    <div class="col-md-6">
-                        <span>&copy; 2025 Comphone Service Management System</span>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <span>เวอร์ชั่น 1.0.0</span>
-                    </div>
+                <div class="main-content">
+                    {% block content %}{% endblock %}
                 </div>
-            </div>
-        </footer>
+            </main>
+        </div>
     </div>
 
-    <!-- Scripts -->
-    <!-- jQuery -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
-    <!-- Bootstrap JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <!-- DataTables JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/dataTables.bootstrap5.min.js"></script>
-    <!-- Chart.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.9.1/chart.min.js"></script>
+    {% if current_user.is_authenticated %}
+    <footer class="footer text-center">
+        <div class="container">
+            <p class="mb-0">
+                © {{ current_year }} {{ business_name }} | 
+                เวอร์ชัน {{ app_version }} | 
+                <a href="tel:{{ business_phone }}" class="text-white">{{ business_phone }}</a>
+            </p>
+        </div>
+    </footer>
+    {% endif %}
+
+    <!-- Quick Add Modals -->
+    <div class="modal fade" id="quickCustomerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">เพิ่มลูกค้าด่วน</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="quickCustomerForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="customerName" class="form-label">ชื่อลูกค้า</label>
+                            <input type="text" class="form-control" id="customerName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="customerPhone" class="form-label">เบอร์โทร</label>
+                            <input type="tel" class="form-control" id="customerPhone" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="customerEmail" class="form-label">อีเมล</label>
+                            <input type="email" class="form-control" id="customerEmail">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="loading spinner-border spinner-border-sm me-2"></span>
+                            บันทึก
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="quickJobModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">เพิ่มงานด่วน</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="quickJobForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="jobCustomer" class="form-label">ลูกค้า</label>
+                            <select class="form-control" id="jobCustomer" required>
+                                <option value="">เลือกลูกค้า</option>
+                                <!-- Populated by JavaScript -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="jobDevice" class="form-label">อุปกรณ์</label>
+                            <input type="text" class="form-control" id="jobDevice" 
+                                   placeholder="เช่น iPhone 15 Pro" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="jobProblem" class="form-label">ปัญหา</label>
+                            <textarea class="form-control" id="jobProblem" rows="3" 
+                                      placeholder="อธิบายปัญหาที่พบ..." required></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="jobPriority" class="form-label">ความสำคัญ</label>
+                                <select class="form-control" id="jobPriority">
+                                    <option value="low">ต่ำ</option>
+                                    <option value="medium" selected>ปานกลาง</option>
+                                    <option value="high">สูง</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="jobCost" class="form-label">ราคาประเมิน</label>
+                                <input type="number" class="form-control" id="jobCost" step="0.01" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                        <button type="submit" class="btn btn-success">
+                            <span class="loading spinner-border spinner-border-sm me-2"></span>
+                            สร้างงาน
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     <script>
-        // Toggle sidebar on mobile
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('show');
         }
 
-        // Close sidebar when clicking outside on mobile
         document.addEventListener('click', function(event) {
             const sidebar = document.getElementById('sidebar');
-            const toggleBtn = document.querySelector('[onclick="toggleSidebar()"]');
+            const toggleBtn = event.target.closest('[onclick="toggleSidebar()"]');
             
-            if (window.innerWidth <= 768) {
-                if (!sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
-                    sidebar.classList.remove('show');
-                }
+            if (!sidebar.contains(event.target) && !toggleBtn && window.innerWidth <= 768) {
+                sidebar.classList.remove('show');
             }
         });
 
-        // Active menu highlighting
-        document.addEventListener('DOMContentLoaded', function() {
-            const currentPath = window.location.pathname;
-            const menuLinks = document.querySelectorAll('.sidebar-menu .nav-link');
+        function quickAddCustomer() {
+            $('#quickCustomerModal').modal('show');
+        }
+
+        function quickAddJob() {
+            // Load customers first
+            loadCustomersForJob();
+            $('#quickJobModal').modal('show');
+        }
+
+        function loadCustomersForJob() {
+            fetch('/api/customers')
+                .then(response => response.json())
+                .then(customers => {
+                    const select = document.getElementById('jobCustomer');
+                    select.innerHTML = '<option value="">เลือกลูกค้า</option>';
+                    customers.forEach(customer => {
+                        const option = document.createElement('option');
+                        option.value = customer.id;
+                        option.textContent = `${customer.name} - ${customer.phone}`;
+                        select.appendChild(option);
+                    });
+                });
+        }
+
+        $('#quickCustomerForm').on('submit', function(e) {
+            e.preventDefault();
             
-            menuLinks.forEach(link => {
-                if (link.getAttribute('href') === currentPath) {
-                    link.classList.add('active');
+            const submitBtn = $(this).find('button[type="submit"]');
+            const loading = submitBtn.find('.loading');
+            
+            loading.show();
+            submitBtn.prop('disabled', true);
+            
+            const data = {
+                name: $('#customerName').val(),
+                phone: $('#customerPhone').val(),
+                email: $('#customerEmail').val()
+            };
+            
+            $.ajax({
+                url: '/customers',
+                method: 'POST',
+                data: data,
+                success: function(response) {
+                    if (response.success) {
+                        $('#quickCustomerModal').modal('hide');
+                        $('#quickCustomerForm')[0].reset();
+                        showAlert('success', 'เพิ่มลูกค้าเรียบร้อยแล้ว');
+                    } else {
+                        showAlert('error', response.message || 'เกิดข้อผิดพลาดในการเพิ่มลูกค้า');
+                    }
+                },
+                error: function() {
+                    showAlert('error', 'เกิดข้อผิดพลาดในการเชื่อมต่อ');
+                },
+                complete: function() {
+                    loading.hide();
+                    submitBtn.prop('disabled', false);
                 }
             });
         });
 
-        // Auto-hide alerts after 5 seconds
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            });
-        }, 5000);
-
-        // Initialize DataTables with Thai language
-        $.extend(true, $.fn.dataTable.defaults, {
-            language: {
-                "lengthMenu": "แสดง _MENU_ รายการ",
-                "zeroRecords": "ไม่พบข้อมูล",
-                "info": "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
-                "infoEmpty": "แสดง 0 ถึง 0 จาก 0 รายการ",
-                "infoFiltered": "(กรองจาก _MAX_ รายการทั้งหมด)",
-                "search": "ค้นหา:",
-                "paginate": {
-                    "first": "หน้าแรก",
-                    "last": "หน้าสุดท้าย",
-                    "next": "ถัดไป",
-                    "previous": "ก่อนหน้า"
+        $('#quickJobForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = $(this).find('button[type="submit"]');
+            const loading = submitBtn.find('.loading');
+            
+            loading.show();
+            submitBtn.prop('disabled', true);
+            
+            const data = {
+                customer_id: $('#jobCustomer').val(),
+                device_type: 'smartphone',
+                brand: $('#jobDevice').val().split(' ')[0] || 'Unknown',
+                model: $('#jobDevice').val() || 'Unknown Model',
+                problem_description: $('#jobProblem').val(),
+                priority: $('#jobPriority').val(),
+                estimated_cost: $('#jobCost').val() || null
+            };
+            
+            $.ajax({
+                url: '/service-jobs',
+                method: 'POST',
+                data: data,
+                success: function(response) {
+                    if (response.success) {
+                        $('#quickJobModal').modal('hide');
+                        $('#quickJobForm')[0].reset();
+                        showAlert('success', 'สร้างงานบริการเรียบร้อยแล้ว');
+                    } else {
+                        showAlert('error', response.message || 'เกิดข้อผิดพลาดในการสร้างงาน');
+                    }
+                },
+                error: function() {
+                    showAlert('error', 'เกิดข้อผิดพลาดในการเชื่อมต่อ');
+                },
+                complete: function() {
+                    loading.hide();
+                    submitBtn.prop('disabled', false);
                 }
-            },
-            responsive: true,
-            pageLength: 25,
-            order: [[0, 'desc']]
+            });
+        });
+
+        function showAlert(type, message) {
+            const alertClass = type === 'error' ? 'danger' : type;
+            const iconClass = type === 'error' ? 'fa-exclamation-triangle' : 
+                             type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
+            
+            const alertHtml = `
+                <div class="alert alert-${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="fas ${iconClass} me-2"></i>${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            $('.main-content').prepend(alertHtml);
+            
+            setTimeout(() => {
+                $('.alert').first().alert('close');
+            }, 5000);
+        }
+
+        function loadNotifications() {
+            // Mock notifications for now
+            const notifications = [
+                { title: 'งานใหม่', message: 'มีงานซ่อม iPhone ใหม่', is_read: false },
+                { title: 'สต็อกต่ำ', message: 'ฟิล์มกันรอยเหลือน้อย', is_read: false }
+            ];
+            
+            const count = notifications.filter(n => !n.is_read).length;
+            $('#notificationCount').text(count).toggle(count > 0);
+            
+            if (notifications.length > 0) {
+                const html = notifications.map(notification => `
+                    <div class="dropdown-item ${notification.is_read ? '' : 'fw-bold'}">
+                        <div class="d-flex justify-content-between">
+                            <span>${notification.title}</span>
+                        </div>
+                        <small class="text-muted">${notification.message}</small>
+                    </div>
+                `).join('');
+                $('#notificationList').html(html);
+            } else {
+                $('#notificationList').html('<div class="dropdown-item text-center text-muted">ไม่มีการแจ้งเตือน</div>');
+            }
+        }
+
+        $(document).ready(function() {
+            {% if current_user.is_authenticated %}
+                loadNotifications();
+                setInterval(loadNotifications, 60000); // Refresh every 60 seconds
+            {% endif %}
         });
     </script>
 

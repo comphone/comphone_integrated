@@ -1,0 +1,40 @@
+<!-- templates/settings/index.html -->
+{% extends "layout.html" %}
+
+{% block title %}ตั้งค่า - Comphone Service Center{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-cog me-2 text-primary"></i>
+        ตั้งค่าระบบ
+    </h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h5>การตั้งค่าทั่วไป</h5>
+        <p class="text-muted">ฟีเจอร์นี้กำลังอยู่ระหว่างการพัฒนา</p>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>คีย์</th>
+                        <th>ค่า</th>
+                        <th>คำอธิบาย</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for setting in settings %}
+                    <tr>
+                        <td><code>{{ setting.key }}</code></td>
+                        <td>{{ setting.value or '-' }}</td>
+                        <td>{{ setting.description or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

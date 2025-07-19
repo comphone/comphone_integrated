@@ -1,0 +1,41 @@
+<!-- templates/users/profile.html -->
+{% extends "layout.html" %}
+
+{% block title %}โปรไฟล์ - Comphone Service Center{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-user me-2 text-primary"></i>
+        โปรไฟล์ผู้ใช้
+    </h1>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5>ข้อมูลส่วนตัว</h5>
+                <table class="table">
+                    <tr>
+                        <td>ชื่อผู้ใช้:</td>
+                        <td><strong>{{ user.username }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td>อีเมล:</td>
+                        <td>{{ user.email }}</td>
+                    </tr>
+                    <tr>
+                        <td>บทบาท:</td>
+                        <td>{{ user.role|user_role }}</td>
+                    </tr>
+                    <tr>
+                        <td>เข้าร่วมเมื่อ:</td>
+                        <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}หน้าหลัก - Comphone Service Management{% endblock %}
-
-{% block page_title %}หน้าหลัก{% endblock %}
+{% block title %}หน้าหลัก - {{ business_name }}{% endblock %}
 
 {% block content %}
 <!-- Welcome Section -->
@@ -13,7 +11,7 @@
                 <div class="row align-items-center">
                     <div class="col-md-8">
                         <h3 class="mb-2">สวัสดี {{ current_user.username }}! 👋</h3>
-                        <p class="mb-0 opacity-75">ยินดีต้อนรับสู่ระบบบริหารจัดการศูนย์บริการมือถือ Comphone</p>
+                        <p class="mb-0 opacity-75">ยินดีต้อนรับสู่ระบบบริหารจัดการศูนย์บริการมือถือ {{ business_name }}</p>
                     </div>
                     <div class="col-md-4 text-end">
                         <h5 class="mb-1">{{ now().strftime('%d/%m/%Y') }}</h5>
@@ -185,9 +183,10 @@
     </div>
 </div>
 
-<!-- Recent Activities -->
+<!-- Main Content Grid -->
 <div class="row">
     <div class="col-lg-8">
+        <!-- Recent Activities -->
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-clock me-2"></i>งานล่าสุด</h5>
@@ -226,7 +225,7 @@
                                     <small>{{ job.created_at.strftime('%d/%m/%Y') if job.created_at else '-' }}</small>
                                 </td>
                                 <td>
-                                    <a href="{{ url_for('service_jobs') }}" class="btn btn-outline-primary btn-sm">
+                                    <a href="{{ url_for('view_service_job', job_id=job.id) }}" class="btn btn-outline-primary btn-sm">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                 </td>
@@ -329,6 +328,54 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Quick Actions -->
+                <hr>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="quickAddCustomer()">
+                        <i class="fas fa-user-plus me-2"></i>เพิ่มลูกค้าด่วน
+                    </button>
+                    <button class="btn btn-outline-success btn-sm" onclick="quickAddJob()">
+                        <i class="fas fa-plus me-2"></i>เพิ่มงานด่วน
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart Section (Optional) -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>ภาพรวมประจำเดือน</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <div class="border-end pe-3">
+                            <h3 class="text-primary">{{ pending_jobs or 0 }}</h3>
+                            <small class="text-muted">รอดำเนินการ</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="border-end pe-3">
+                            <h3 class="text-info">{{ in_progress_jobs or 0 }}</h3>
+                            <small class="text-muted">กำลังซ่อม</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="border-end pe-3">
+                            <h3 class="text-success">{{ completed_jobs or 0 }}</h3>
+                            <small class="text-muted">เสร็จแล้ว</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h3 class="text-warning">{{ "%.0f"|format(monthly_revenue or 0) }}</h3>
+                        <small class="text-muted">รายได้ (฿)</small>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -367,6 +414,36 @@
         card.addEventListener('mouseleave', function() {
             this.style.transform = 'translateY(0)';
         });
+    });
+
+    // Real-time stats animation
+    function animateCounters() {
+        const counters = document.querySelectorAll('h2, h3, h4');
+        counters.forEach(counter => {
+            const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
+            let current = 0;
+            const increment = target / 50;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                
+                if (counter.textContent.includes('฿')) {
+                    counter.textContent = Math.floor(current).toLocaleString();
+                } else {
+                    counter.textContent = Math.floor(current);
+                }
+            }, 50);
+        });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Trigger animation after short delay
+        setTimeout(animateCounters, 500);
     });
 
     console.log('🚀 Dashboard loaded successfully!');

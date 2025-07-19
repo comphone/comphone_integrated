@@ -1,930 +1,413 @@
-{% extends "base.html" %}
+{% extends "layout.html" %}
 
-{% block title %}จัดการงานบริการ{% endblock %}
+{% block title %}งานบริการ - Comphone Service Center{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-tools me-2 text-primary"></i>
+        งานบริการ
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addJobModal">
+            <i class="fas fa-plus me-1"></i>
+            เพิ่มงานใหม่
+        </button>
+    </div>
+</div>
+
+<!-- Add Job Modal -->
+<div class="modal fade" id="addJobModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>
+                    เพิ่มงานบริการใหม่
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addJobForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">ลูกค้า <span class="text-danger">*</span></label>
+                                <select class="form-select" name="customer_id" required>
+                                    <option value="">เลือกลูกค้า</option>
+                                    {% for customer in customers %}
+                                    <option value="{{ customer.id }}">{{ customer.name }} ({{ customer.phone }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">อุปกรณ์ <span class="text-danger">*</span></label>
+                                <select class="form-select" name="device_id" required>
+                                    <option value="">เลือกลูกค้าก่อน</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">อธิบายปัญหา <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="problem_description" rows="3" required
+                                  placeholder="อธิบายอาการและปัญหาที่พบ..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">การวินิจฉัยเบื้องต้น</label>
+                        <textarea class="form-control" name="diagnosis" rows="2"
+                                  placeholder="วินิจฉัยปัญหาเบื้องต้น..."></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">ระดับความสำคัญ</label>
+                                <select class="form-select" name="priority">
+                                    <option value="low">ต่ำ</option>
+                                    <option value="medium" selected>ปานกลาง</option>
+                                    <option value="high">สูง</option>
+                                    <option value="urgent">เร่งด่วน</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">ช่างเทคนิค</label>
+                                <select class="form-select" name="technician_id">
+                                    <option value="">ยังไม่มอบหมาย</option>
+                                    {% for tech in technicians %}
+                                    <option value="{{ tech.id }}">{{ tech.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">ราคาประเมิน</label>
+                                <input type="number" class="form-control" name="estimated_cost" 
+                                       step="0.01" placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">วันที่คาดว่าจะเสร็จ</label>
+                                <input type="date" class="form-control" name="expected_completion_date">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">สถานะ</label>
+                                <select class="form-select" name="status">
+                                    <option value="pending" selected>รอดำเนินการ</option>
+                                    <option value="in_progress">กำลังซ่อม</option>
+                                    <option value="waiting_parts">รออะไหล่</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">หมายเหตุ</label>
+                        <textarea class="form-control" name="notes" rows="2"
+                                  placeholder="หมายเหตุเพิ่มเติม..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>
+                        บันทึก
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
 {% block extra_css %}
 <style>
-    .job-card {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-        transition: all 0.3s ease;
-        border: 1px solid #e2e8f0;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .job-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    }
-    
-    .job-status {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        border-radius: 15px 15px 0 0;
-    }
-    
-    .status-pending { background: #f59e0b; }
-    .status-in_progress { background: #3b82f6; }
-    .status-waiting_parts { background: #8b5cf6; }
-    .status-completed { background: #10b981; }
-    .status-cancelled { background: #ef4444; }
-    
-    .job-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: start;
-        margin-bottom: 15px;
-    }
-    
-    .job-id {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: #1e40af;
-        background: #dbeafe;
-        padding: 4px 12px;
-        border-radius: 20px;
-    }
-    
-    .job-priority {
-        font-size: 0.8rem;
-        padding: 3px 10px;
-        border-radius: 15px;
-        font-weight: 500;
-    }
-    
-    .priority-high {
-        background: #fee2e2;
-        color: #dc2626;
-    }
-    
-    .priority-medium {
-        background: #fef3c7;
-        color: #d97706;
-    }
-    
-    .priority-low {
-        background: #dcfce7;
-        color: #16a34a;
-    }
-    
-    .job-device {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 8px;
-    }
-    
-    .job-customer {
-        color: #6b7280;
-        font-size: 0.95rem;
-        margin-bottom: 15px;
-    }
-    
-    .job-problem {
-        background: #f8fafc;
-        border-left: 4px solid #3b82f6;
-        padding: 10px 15px;
-        margin-bottom: 15px;
-        border-radius: 0 8px 8px 0;
-        font-size: 0.9rem;
-        color: #4b5563;
-    }
-    
-    .job-meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-top: 15px;
-        border-top: 1px solid #e5e7eb;
-        font-size: 0.85rem;
-        color: #6b7280;
-    }
-    
-    .job-technician {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .technician-avatar {
-        width: 25px;
-        height: 25px;
-        border-radius: 50%;
-        background: #3b82f6;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-    
-    .job-actions {
-        display: flex;
-        gap: 8px;
-        margin-top: 15px;
-    }
-    
-    .btn-action {
-        border: none;
-        border-radius: 8px;
-        padding: 6px 12px;
-        font-size: 0.8rem;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        flex: 1;
-        justify-content: center;
-    }
-    
-    .btn-view {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-    
-    .btn-view:hover {
-        background: #3b82f6;
-        color: white;
-    }
-    
-    .btn-edit {
-        background: #fef3c7;
-        color: #d97706;
-    }
-    
-    .btn-edit:hover {
-        background: #f59e0b;
-        color: white;
-    }
-    
-    .kanban-board {
-        display: flex;
-        gap: 20px;
-        overflow-x: auto;
-        padding-bottom: 20px;
-    }
-    
-    .kanban-column {
-        min-width: 300px;
-        background: #f8fafc;
-        border-radius: 15px;
-        padding: 20px;
-        border: 2px solid #e2e8f0;
-    }
-    
-    .kanban-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #e2e8f0;
-    }
-    
-    .kanban-title {
-        font-weight: 600;
-        color: #374151;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .kanban-count {
-        background: #3b82f6;
-        color: white;
-        border-radius: 50%;
-        width: 25px;
-        height: 25px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
-    
-    .kanban-job {
-        background: white;
-        border-radius: 12px;
-        padding: 15px;
-        margin-bottom: 15px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-    
-    .kanban-job:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-    }
-    
-    .view-toggle {
-        background: white;
-        border-radius: 12px;
-        padding: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border: 1px solid #e2e8f0;
-        display: flex;
-        gap: 5px;
-    }
-    
-    .view-btn {
-        border: none;
-        background: transparent;
-        padding: 8px 15px;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        color: #6b7280;
-        font-weight: 500;
-    }
-    
-    .view-btn.active {
-        background: #3b82f6;
-        color: white;
-    }
-    
-    .view-btn:not(.active):hover {
-        background: #f1f5f9;
-        color: #1e40af;
-    }
-    
-    .stats-cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        margin-bottom: 30px;
-    }
-    
-    .stats-card {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-        border: 1px solid #e2e8f0;
-        text-align: center;
-        transition: all 0.3s ease;
-    }
-    
-    .stats-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    }
-    
-    .stats-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 15px;
-        font-size: 1.2rem;
-        color: white;
-    }
-    
-    .stats-number {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #1e40af;
-        margin-bottom: 5px;
-    }
-    
-    .stats-label {
-        color: #6b7280;
-        font-size: 0.9rem;
-    }
-    
-    .filter-section {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-        border: 1px solid #e2e8f0;
-        margin-bottom: 20px;
-    }
-    
-    .btn-create-job {
-        background: linear-gradient(135deg, #10b981, #059669);
-        border: none;
-        border-radius: 12px;
-        padding: 12px 25px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .btn-create-job:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
-    }
+.text-purple {
+    color: #6f42c1 !important;
+}
+.bg-purple {
+    background-color: #6f42c1 !important;
+}
 </style>
 {% endblock %}
 
-{% block content %}
-<div class="container-fluid p-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 text-gray-800 mb-0">
-                        <i class="fas fa-tools me-2 text-primary"></i>จัดการงานบริการ
-                    </h1>
-                    <p class="text-muted mb-0">ติดตามและจัดการงานซ่อมและบริการทั้งหมด</p>
-                </div>
-                <div class="d-flex gap-3 align-items-center">
-                    <div class="view-toggle">
-                        <button class="view-btn active" data-view="kanban">
-                            <i class="fas fa-columns me-2"></i>Kanban
-                        </button>
-                        <button class="view-btn" data-view="list">
-                            <i class="fas fa-list me-2"></i>รายการ
-                        </button>
-                    </div>
-                    <button class="btn btn-success btn-create-job" data-bs-toggle="modal" data-bs-target="#createJobModal">
-                        <i class="fas fa-plus me-2"></i>สร้างงานใหม่
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Statistics -->
-    <div class="stats-cards">
-        <div class="stats-card">
-            <div class="stats-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                <i class="fas fa-clock"></i>
-            </div>
-            <div class="stats-number">{{ pending_jobs or 0 }}</div>
-            <div class="stats-label">รอดำเนินการ</div>
-        </div>
-        <div class="stats-card">
-            <div class="stats-icon" style="background: linear-gradient(135deg, #3b82f6, #1e40af);">
-                <i class="fas fa-cogs"></i>
-            </div>
-            <div class="stats-number">{{ in_progress_jobs or 0 }}</div>
-            <div class="stats-label">กำลังดำเนินการ</div>
-        </div>
-        <div class="stats-card">
-            <div class="stats-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
-                <i class="fas fa-pause"></i>
-            </div>
-            <div class="stats-number">{{ waiting_parts_jobs or 0 }}</div>
-            <div class="stats-label">รออะไหล่</div>
-        </div>
-        <div class="stats-card">
-            <div class="stats-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
-                <i class="fas fa-check"></i>
-            </div>
-            <div class="stats-number">{{ completed_jobs or 0 }}</div>
-            <div class="stats-label">เสร็จสิ้น</div>
-        </div>
-        <div class="stats-card">
-            <div class="stats-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
-                <i class="fas fa-times"></i>
-            </div>
-            <div class="stats-number">{{ cancelled_jobs or 0 }}</div>
-            <div class="stats-label">ยกเลิก</div>
-        </div>
-    </div>
-
-    <!-- Filter Section -->
-    <div class="filter-section">
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label class="form-label">ค้นหางาน</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control" placeholder="หมายเลขงาน, ลูกค้า, อุปกรณ์..." id="jobSearch">
-                </div>
-            </div>
-            <div class="col-md-2 mb-3">
-                <label class="form-label">สถานะ</label>
-                <select class="form-control" id="statusFilter">
-                    <option value="">ทั้งหมด</option>
-                    <option value="pending">รอดำเนินการ</option>
-                    <option value="in_progress">กำลังดำเนินการ</option>
-                    <option value="waiting_parts">รออะไหล่</option>
-                    <option value="completed">เสร็จสิ้น</option>
-                    <option value="cancelled">ยกเลิก</option>
-                </select>
-            </div>
-            <div class="col-md-2 mb-3">
-                <label class="form-label">ช่างเทคนิค</label>
-                <select class="form-control" id="technicianFilter">
-                    <option value="">ทั้งหมด</option>
-                    {% for tech in technicians %}
-                    <option value="{{ tech.id }}">{{ tech.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-2 mb-3">
-                <label class="form-label">ระดับความสำคัญ</label>
-                <select class="form-control" id="priorityFilter">
-                    <option value="">ทั้งหมด</option>
-                    <option value="high">สูง</option>
-                    <option value="medium">ปานกลาง</option>
-                    <option value="low">ต่ำ</option>
-                </select>
-            </div>
-            <div class="col-md-2 mb-3">
-                <label class="form-label">วันที่</label>
-                <input type="date" class="form-control" id="dateFilter">
-            </div>
-        </div>
-    </div>
-
-    <!-- Kanban View -->
-    <div id="kanbanView" class="view-content">
-        <div class="kanban-board">
-            <!-- Pending Column -->
-            <div class="kanban-column">
-                <div class="kanban-header">
-                    <div class="kanban-title">
-                        <i class="fas fa-clock text-warning"></i>
-                        รอดำเนินการ
-                    </div>
-                    <div class="kanban-count">{{ pending_jobs or 0 }}</div>
-                </div>
-                {% if service_jobs %}
-                    {% for job in service_jobs %}
-                        {% if job.status == 'pending' %}
-                        <div class="kanban-job" onclick="viewJob({{ job.id }})">
-                            <div class="job-header">
-                                <div class="job-id">#{{ job.id }}</div>
-                                <div class="job-priority priority-{{ job.priority or 'medium' }}">
-                                    {{ 'สูง' if job.priority == 'high' else 'ปานกลาง' if job.priority == 'medium' else 'ต่ำ' }}
-                                </div>
-                            </div>
-                            <div class="job-device">{{ job.device.brand }} {{ job.device.model }}</div>
-                            <div class="job-customer">
-                                <i class="fas fa-user me-1"></i>{{ job.customer.name }}
-                            </div>
-                            <div class="job-problem">{{ job.problem_description[:50] }}...</div>
-                            <div class="job-meta">
-                                <div>{{ job.created_at.strftime('%d/%m/%Y') }}</div>
-                                {% if job.technician %}
-                                <div class="job-technician">
-                                    <div class="technician-avatar">{{ job.technician.name[0] }}</div>
-                                    {{ job.technician.name }}
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
-            </div>
-
-            <!-- Completed Column -->
-            <div class="kanban-column">
-                <div class="kanban-header">
-                    <div class="kanban-title">
-                        <i class="fas fa-check text-success"></i>
-                        เสร็จสิ้น
-                    </div>
-                    <div class="kanban-count">{{ completed_jobs or 0 }}</div>
-                </div>
-                {% if service_jobs %}
-                    {% for job in service_jobs %}
-                        {% if job.status == 'completed' %}
-                        <div class="kanban-job" onclick="viewJob({{ job.id }})">
-                            <div class="job-header">
-                                <div class="job-id">#{{ job.id }}</div>
-                                <div class="job-priority priority-{{ job.priority or 'medium' }}">
-                                    {{ 'สูง' if job.priority == 'high' else 'ปานกลาง' if job.priority == 'medium' else 'ต่ำ' }}
-                                </div>
-                            </div>
-                            <div class="job-device">{{ job.device.brand }} {{ job.device.model }}</div>
-                            <div class="job-customer">
-                                <i class="fas fa-user me-1"></i>{{ job.customer.name }}
-                            </div>
-                            <div class="job-problem">{{ job.problem_description[:50] }}...</div>
-                            <div class="job-meta">
-                                <div>{{ job.created_at.strftime('%d/%m/%Y') }}</div>
-                                {% if job.technician %}
-                                <div class="job-technician">
-                                    <div class="technician-avatar">{{ job.technician.name[0] }}</div>
-                                    {{ job.technician.name }}
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- List View -->
-    <div id="listView" class="view-content" style="display: none;">
-        <div class="row">
-            {% if service_jobs %}
-                {% for job in service_jobs %}
-                <div class="col-lg-6 mb-4 job-item" 
-                     data-status="{{ job.status }}"
-                     data-technician="{{ job.technician.id if job.technician else '' }}"
-                     data-priority="{{ job.priority or 'medium' }}"
-                     data-date="{{ job.created_at.strftime('%Y-%m-%d') }}">
-                    <div class="job-card p-4">
-                        <div class="job-status status-{{ job.status }}"></div>
-                        <div class="job-header">
-                            <div class="job-id">#{{ job.id }}</div>
-                            <div class="job-priority priority-{{ job.priority or 'medium' }}">
-                                {{ 'สูง' if job.priority == 'high' else 'ปานกลาง' if job.priority == 'medium' else 'ต่ำ' }}
-                            </div>
-                        </div>
-                        
-                        <div class="job-device">{{ job.device.brand }} {{ job.device.model }}</div>
-                        <div class="job-customer">
-                            <i class="fas fa-user me-2"></i>{{ job.customer.name }}
-                            <span class="ms-3">
-                                <i class="fas fa-phone me-1"></i>{{ job.customer.phone }}
-                            </span>
-                        </div>
-                        
-                        <div class="job-problem">
-                            <strong>ปัญหา:</strong> {{ job.problem_description }}
-                        </div>
-                        
-                        <div class="row mt-3">
-                            <div class="col-6">
-                                <small class="text-muted">
-                                    <i class="fas fa-calendar me-1"></i>{{ job.created_at.strftime('%d/%m/%Y %H:%M') }}
-                                </small>
-                            </div>
-                            <div class="col-6 text-end">
-                                {% if job.estimated_cost %}
-                                <small class="text-muted">
-                                    <i class="fas fa-money-bill me-1"></i>{{ "{:,.0f}".format(job.estimated_cost) }} ฿
-                                </small>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div class="job-meta">
-                            <div>
-                                <span class="badge bg-{{ 'warning' if job.status == 'pending' else 'primary' if job.status == 'in_progress' else 'info' if job.status == 'waiting_parts' else 'success' if job.status == 'completed' else 'danger' }}">
-                                    {{ 'รอดำเนินการ' if job.status == 'pending' else 'กำลังดำเนินการ' if job.status == 'in_progress' else 'รออะไหล่' if job.status == 'waiting_parts' else 'เสร็จสิ้น' if job.status == 'completed' else 'ยกเลิก' }}
-                                </span>
-                            </div>
-                            {% if job.technician %}
-                            <div class="job-technician">
-                                <div class="technician-avatar">{{ job.technician.name[0] }}</div>
-                                {{ job.technician.name }}
-                            </div>
-                            {% else %}
-                            <div class="text-muted">
-                                <i class="fas fa-user-slash me-1"></i>ยังไม่ได้มอบหมายช่าง
-                            </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="job-actions">
-                            <button class="btn-action btn-view" onclick="viewJob({{ job.id }})">
-                                <i class="fas fa-eye"></i>ดูรายละเอียด
-                            </button>
-                            <button class="btn-action btn-edit" onclick="editJob({{ job.id }})">
-                                <i class="fas fa-edit"></i>แก้ไข
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="col-12">
-                    <div class="text-center py-5">
-                        <i class="fas fa-tools fa-4x text-muted mb-3"></i>
-                        <h4>ยังไม่มีงานบริการ</h4>
-                        <p class="text-muted">เริ่มต้นด้วยการสร้างงานบริการแรกของคุณ</p>
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createJobModal">
-                            <i class="fas fa-plus me-2"></i>สร้างงานใหม่
-                        </button>
-                    </div>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-<!-- Create Job Modal -->
-<div class="modal fade" id="createJobModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content" style="border-radius: 15px;">
-            <div class="modal-header" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
-                <h5 class="modal-title">
-                    <i class="fas fa-plus me-2"></i>สร้างงานบริการใหม่
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <form id="createJobForm">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">
-                                <i class="fas fa-user me-2 text-primary"></i>ลูกค้า
-                            </label>
-                            <select class="form-control" name="customer_id" required>
-                                <option value="">เลือกลูกค้า</option>
-                                {% for customer in customers %}
-                                <option value="{{ customer.id }}">{{ customer.name }} - {{ customer.phone }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">
-                                <i class="fas fa-mobile-alt me-2 text-primary"></i>อุปกรณ์
-                            </label>
-                            <select class="form-control" name="device_id" required>
-                                <option value="">เลือกอุปกรณ์</option>
-                                <!-- Populated by JavaScript -->
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">
-                                <i class="fas fa-exclamation-triangle me-2 text-primary"></i>ระดับความสำคัญ
-                            </label>
-                            <select class="form-control" name="priority">
-                                <option value="low">ต่ำ</option>
-                                <option value="medium" selected>ปานกลาง</option>
-                                <option value="high">สูง</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">
-                                <i class="fas fa-user-cog me-2 text-primary"></i>ช่างเทคนิค
-                            </label>
-                            <select class="form-control" name="technician_id">
-                                <option value="">มอบหมายภายหลัง</option>
-                                {% for tech in technicians %}
-                                <option value="{{ tech.id }}">{{ tech.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">
-                                <i class="fas fa-money-bill me-2 text-primary"></i>ราคาประเมิน (฿)
-                            </label>
-                            <input type="number" class="form-control" name="estimated_cost" step="0.01" min="0">
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="fas fa-clipboard-list me-2 text-primary"></i>รายละเอียดปัญหา
-                        </label>
-                        <textarea class="form-control" name="problem_description" rows="4" required
-                                  placeholder="อธิบายปัญหาและอาการของอุปกรณ์..."></textarea>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="fas fa-tools me-2 text-primary"></i>การวินิจฉัยเบื้องต้น
-                        </label>
-                        <textarea class="form-control" name="diagnosis" rows="3" 
-                                  placeholder="บันทึกการตรวจสอบและวินิจฉัยเบื้องต้น..."></textarea>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">
-                                <i class="fas fa-calendar me-2 text-primary"></i>วันที่คาดว่าจะเสร็จ
-                            </label>
-                            <input type="date" class="form-control" name="expected_completion_date">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">
-                                <i class="fas fa-info-circle me-2 text-primary"></i>สถานะ
-                            </label>
-                            <select class="form-control" name="status">
-                                <option value="pending">รอดำเนินการ</option>
-                                <option value="in_progress">กำลังดำเนินการ</option>
-                                <option value="waiting_parts">รออะไหล่</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="fas fa-sticky-note me-2 text-primary"></i>หมายเหตุ
-                        </label>
-                        <textarea class="form-control" name="notes" rows="2" 
-                                  placeholder="บันทึกข้อมูลเพิ่มเติม..."></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" 
-                        style="border-radius: 10px;">ยกเลิก</button>
-                <button type="button" class="btn btn-success" onclick="saveJob()" 
-                        style="border-radius: 10px; background: linear-gradient(135deg, #10b981, #059669);">
-                    <i class="fas fa-save me-2"></i>บันทึก
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
+{% block extra_js %}
 <script>
-// View toggle functionality
-document.querySelectorAll('.view-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const view = this.dataset.view;
-        
-        // Update active button
-        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        
-        // Show/hide views
-        document.getElementById('kanbanView').style.display = view === 'kanban' ? 'block' : 'none';
-        document.getElementById('listView').style.display = view === 'list' ? 'block' : 'none';
-    });
-});
-
-// Search functionality
-document.getElementById('jobSearch').addEventListener('input', function(e) {
-    const searchTerm = e.target.value.toLowerCase();
-    const jobs = document.querySelectorAll('.job-item, .kanban-job');
+// Load devices when customer is selected
+$('select[name="customer_id"]').change(function() {
+    const customerId = $(this).val();
+    const deviceSelect = $('select[name="device_id"]');
     
-    jobs.forEach(job => {
-        const text = job.textContent.toLowerCase();
-        if (text.includes(searchTerm)) {
-            job.style.display = 'block';
-        } else {
-            job.style.display = 'none';
-        }
-    });
-});
-
-// Filter functionality
-['statusFilter', 'technicianFilter', 'priorityFilter', 'dateFilter'].forEach(filterId => {
-    document.getElementById(filterId).addEventListener('change', applyFilters);
-});
-
-function applyFilters() {
-    const status = document.getElementById('statusFilter').value;
-    const technician = document.getElementById('technicianFilter').value;
-    const priority = document.getElementById('priorityFilter').value;
-    const date = document.getElementById('dateFilter').value;
-    
-    const jobs = document.querySelectorAll('.job-item');
-    
-    jobs.forEach(job => {
-        let show = true;
-        
-        if (status && job.dataset.status !== status) show = false;
-        if (technician && job.dataset.technician !== technician) show = false;
-        if (priority && job.dataset.priority !== priority) show = false;
-        if (date && job.dataset.date !== date) show = false;
-        
-        job.style.display = show ? 'block' : 'none';
-    });
-}
-
-// Customer selection change
-document.querySelector('select[name="customer_id"]').addEventListener('change', function() {
-    const customerId = this.value;
-    const deviceSelect = document.querySelector('select[name="device_id"]');
-    
-    deviceSelect.innerHTML = '<option value="">เลือกอุปกรณ์</option>';
+    deviceSelect.html('<option value="">กำลังโหลด...</option>');
     
     if (customerId) {
-        // Fetch customer devices
-        fetch(`/api/customers/${customerId}/devices`)
-            .then(response => response.json())
-            .then(devices => {
-                devices.forEach(device => {
-                    const option = document.createElement('option');
-                    option.value = device.id;
-                    option.textContent = `${device.brand} ${device.model} - ${device.serial_number}`;
-                    deviceSelect.appendChild(option);
-                });
+        $.get(`/api/customers/${customerId}/devices`)
+            .done(function(data) {
+                if (data.success) {
+                    deviceSelect.html('<option value="">เลือกอุปกรณ์</option>');
+                    data.devices.forEach(function(device) {
+                        deviceSelect.append(`<option value="${device.id}">${device.name}</option>`);
+                    });
+                } else {
+                    deviceSelect.html('<option value="">ไม่พบอุปกรณ์</option>');
+                }
+            })
+            .fail(function() {
+                deviceSelect.html('<option value="">เกิดข้อผิดพลาด</option>');
             });
+    } else {
+        deviceSelect.html('<option value="">เลือกลูกค้าก่อน</option>');
     }
 });
 
-// Job actions
-function viewJob(id) {
-    window.location.href = `/service-jobs/${id}`;
-}
-
-function editJob(id) {
-    window.location.href = `/service-jobs/${id}/edit`;
-}
-
-function saveJob() {
-    const form = document.getElementById('createJobForm');
-    const formData = new FormData(form);
+// Submit form
+$('#addJobForm').submit(function(e) {
+    e.preventDefault();
     
-    fetch('/service-jobs', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+    const formData = new FormData(this);
+    const submitBtn = $(this).find('button[type="submit"]');
+    
+    submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>กำลังบันทึก...');
+    
+    $.ajax({
+        url: '{{ url_for("create_service_job") }}',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            if (response.success) {
+                location.reload();
+            } else {
+                alert('เกิดข้อผิดพลาด: ' + response.message);
+            }
+        },
+        error: function(xhr) {
+            const response = xhr.responseJSON;
+            alert('เกิดข้อผิดพลาด: ' + (response ? response.message : 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้'));
+        },
+        complete: function() {
+            submitBtn.prop('disabled', false).html('<i class="fas fa-save me-1"></i>บันทึก');
         }
     });
+});
+
+// Delete job function
+function deleteJob(jobId) {
+    if (confirm('คุณแน่ใจหรือไม่ที่จะลบงานบริการนี้?')) {
+        $.ajax({
+            url: `/service-jobs/${jobId}/delete`,
+            type: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                const response = xhr.responseJSON;
+                alert('เกิดข้อผิดพลาด: ' + (response ? response.message : 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้'));
+            }
+        });
+    }
 }
 
-// Form validation
-document.getElementById('createJobForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    saveJob();
+// Auto-submit filter form on change
+$('select[name="status"], select[name="technician"]').change(function() {
+    $(this).closest('form').submit();
 });
-</script>
-{% endblock %}าง' if job.priority == 'medium' else 'ต่ำ' }}
-                                </div>
-                            </div>
-                            <div class="job-device">{{ job.device.brand }} {{ job.device.model }}</div>
-                            <div class="job-customer">
-                                <i class="fas fa-user me-1"></i>{{ job.customer.name }}
-                            </div>
-                            <div class="job-problem">{{ job.problem_description[:50] }}...</div>
-                            <div class="job-meta">
-                                <div>{{ job.created_at.strftime('%d/%m/%Y') }}</div>
-                                {% if job.technician %}
-                                <div class="job-technician">
-                                    <div class="technician-avatar">{{ job.technician.name[0] }}</div>
-                                    {{ job.technician.name }}
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
+</script> Status Cards -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="fs-5 fw-bold text-warning">{{ pending_jobs }}</div>
+                <small>รอดำเนินการ</small>
             </div>
-
-            <!-- In Progress Column -->
-            <div class="kanban-column">
-                <div class="kanban-header">
-                    <div class="kanban-title">
-                        <i class="fas fa-cogs text-primary"></i>
-                        กำลังดำเนินการ
-                    </div>
-                    <div class="kanban-count">{{ in_progress_jobs or 0 }}</div>
-                </div>
-                {% if service_jobs %}
-                    {% for job in service_jobs %}
-                        {% if job.status == 'in_progress' %}
-                        <div class="kanban-job" onclick="viewJob({{ job.id }})">
-                            <div class="job-header">
-                                <div class="job-id">#{{ job.id }}</div>
-                                <div class="job-priority priority-{{ job.priority or 'medium' }}">
-                                    {{ 'สูง' if job.priority == 'high' else 'ปานกลาง' if job.priority == 'medium' else 'ต่ำ' }}
-                                </div>
-                            </div>
-                            <div class="job-device">{{ job.device.brand }} {{ job.device.model }}</div>
-                            <div class="job-customer">
-                                <i class="fas fa-user me-1"></i>{{ job.customer.name }}
-                            </div>
-                            <div class="job-problem">{{ job.problem_description[:50] }}...</div>
-                            <div class="job-meta">
-                                <div>{{ job.created_at.strftime('%d/%m/%Y') }}</div>
-                                {% if job.technician %}
-                                <div class="job-technician">
-                                    <div class="technician-avatar">{{ job.technician.name[0] }}</div>
-                                    {{ job.technician.name }}
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="fs-5 fw-bold text-info">{{ in_progress_jobs }}</div>
+                <small>กำลังซ่อม</small>
             </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="fs-5 fw-bold text-purple">{{ waiting_parts_jobs }}</div>
+                <small>รออะไหล่</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="fs-5 fw-bold text-success">{{ completed_jobs }}</div>
+                <small>เสร็จแล้ว</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="fs-5 fw-bold text-danger">{{ cancelled_jobs }}</div>
+                <small>ยกเลิก</small>
+            </div>
+        </div>
+    </div>
+</div>
 
-            <!-- Waiting Parts Column -->
-            <div class="kanban-column">
-                <div class="kanban-header">
-                    <div class="kanban-title">
-                        <i class="fas fa-pause text-purple"></i>
-                        รออะไหล่
-                    </div>
-                    <div class="kanban-count">{{ waiting_parts_jobs or 0 }}</div>
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">ค้นหา</label>
+                <input type="text" class="form-control" name="search" 
+                       placeholder="รหัส, ลูกค้า, อุปกรณ์..." 
+                       value="{{ request.args.get('search', '') }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">สถานะ</label>
+                <select class="form-select" name="status">
+                    <option value="">ทั้งหมด</option>
+                    <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>รอดำเนินการ</option>
+                    <option value="in_progress" {% if request.args.get('status') == 'in_progress' %}selected{% endif %}>กำลังซ่อม</option>
+                    <option value="waiting_parts" {% if request.args.get('status') == 'waiting_parts' %}selected{% endif %}>รออะไหล่</option>
+                    <option value="completed" {% if request.args.get('status') == 'completed' %}selected{% endif %}>เสร็จแล้ว</option>
+                    <option value="cancelled" {% if request.args.get('status') == 'cancelled' %}selected{% endif %}>ยกเลิก</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">ช่างเทคนิค</label>
+                <select class="form-select" name="technician">
+                    <option value="">ทั้งหมด</option>
+                    {% for tech in technicians %}
+                    <option value="{{ tech.id }}" {% if request.args.get('technician') == tech.id|string %}selected{% endif %}>
+                        {{ tech.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">วันที่เริ่ม</label>
+                <input type="date" class="form-control" name="date_from" 
+                       value="{{ request.args.get('date_from', '') }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">วันที่สิ้นสุด</label>
+                <input type="date" class="form-control" name="date_to" 
+                       value="{{ request.args.get('date_to', '') }}">
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">&nbsp;</label>
+                <div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <a href="{{ url_for('service_jobs') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i>
+                    </a>
                 </div>
-                {% if service_jobs %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Jobs List -->
+<div class="card">
+    <div class="card-body">
+        {% if service_jobs %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>รหัส</th>
+                        <th>ลูกค้า</th>
+                        <th>อุปกรณ์</th>
+                        <th>ปัญหา</th>
+                        <th>ช่างเทคนิค</th>
+                        <th>สถานะ</th>
+                        <th>วันที่สร้าง</th>
+                        <th>จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody>
                     {% for job in service_jobs %}
-                        {% if job.status == 'waiting_parts' %}
-                        <div class="kanban-job" onclick="viewJob({{ job.id }})">
-                            <div class="job-header">
-                                <div class="job-id">#{{ job.id }}</div>
-                                <div class="job-priority priority-{{ job.priority or 'medium' }}">
-                                    {{ 'สูง' if job.priority == 'high' else 'ปานกล
-									{% if condition %}
-									...
-									{% endif %}
+                    <tr>
+                        <td><strong>#{{ job.id }}</strong></td>
+                        <td>
+                            <div>{{ job.customer.name }}</div>
+                            <small class="text-muted">{{ job.customer.phone }}</small>
+                        </td>
+                        <td>
+                            <div>{{ job.device.brand }} {{ job.device.model }}</div>
+                            <small class="text-muted">{{ job.device.device_type }}</small>
+                        </td>
+                        <td>
+                            <div title="{{ job.problem_description }}">
+                                {{ job.problem_description[:50] }}{% if job.problem_description|length > 50 %}...{% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            {% if job.assigned_technician %}
+                                {{ job.assigned_technician.username }}
+                            {% else %}
+                                <span class="text-muted">ยังไม่มอบหมาย</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ job.status|status_badge|safe }}</td>
+                        <td>{{ job.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('view_service_job', job_id=job.id) }}" 
+                                   class="btn btn-outline-primary" title="ดู">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('edit_service_job', job_id=job.id) }}" 
+                                   class="btn btn-outline-warning" title="แก้ไข">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger" 
+                                        onclick="deleteJob({{ job.id }})" title="ลบ">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-tools fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">ไม่พบงานบริการ</h5>
+            <p class="text-muted">เริ่มต้นด้วยการเพิ่มงานบริการใหม่</p>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addJobModal">
+                <i class="fas fa-plus me-1"></i>
+                เพิ่มงานใหม่
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!--
