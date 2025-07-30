@@ -9,5 +9,5 @@ import pytz
 # ไฟล์ __init__.py และไฟล์อื่นๆ จะมา import จากที่นี่
 
 csrf = CSRFProtect()
-cache = TTLCache(maxsize=100, ttl=300) # แก้ไข TTL เป็น 300 วินาที (5 นาที)
+cache = TTLCache(maxsize=100, ttl=300) # สร้าง Cache object ที่มีอายุ 5 นาที
 scheduler = BackgroundScheduler(daemon=True, timezone=pytz.timezone('Asia/Bangkok'))
