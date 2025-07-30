@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}500 - เกิดข้อผิดพลาดในระบบ{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-1">500</h1>
+    <p class="lead text-muted">ขออภัย, เกิดข้อผิดพลาดบางอย่างในระบบ</p>
+    <p>ทีมงานของเราได้รับแจ้งเรื่องนี้แล้ว และกำลังเร่งดำเนินการแก้ไข</p>
+    <a href="{{ url_for('main.summary') }}" class="btn btn-primary mt-3">กลับสู่หน้าหลัก</a>
+</div>
+{% endblock %}
