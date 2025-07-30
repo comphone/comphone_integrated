@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}จัดการข้อมูลซ้ำซ้อน - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-intersect"></i> จัดการข้อมูลซ้ำซ้อน</h1>
+</div>
+
+<p>ระบบจะแสดงรายการงานหรืออุปกรณ์ที่อาจซ้ำซ้อนกัน (มีชื่อเหมือนกัน) เพื่อให้คุณตรวจสอบและลบรายการที่ไม่ต้องการออก</p>
+
+<nav>
+    <div class="nav nav-tabs" id="nav-tab" role="tablist">
+        <button class="nav-link active" id="nav-tasks-tab" data-bs-toggle="tab" data-bs-target="#nav-tasks" type="button" role="tab" aria-controls="nav-tasks" aria-selected="true">
+            <i class="bi bi-card-checklist"></i> งานที่ซ้ำซ้อน
+        </button>
+        <button class="nav-link" id="nav-equipment-tab" data-bs-toggle="tab" data-bs-target="#nav-equipment" type="button" role="tab" aria-controls="nav-equipment" aria-selected="false">
+            <i class="bi bi-box-seam"></i> อุปกรณ์ที่ซ้ำซ้อน
+        </button>
+    </div>
+</nav>
+
+<div class="tab-content" id="nav-tabContent">
+    <!-- Task Duplicates Tab -->
+    <div class="tab-pane fade show active p-3" id="nav-tasks" role="tabpanel" aria-labelledby="nav-tasks-tab">
+        <h4>รายการงานที่อาจซ้ำซ้อน</h4>
+        {% if duplicates %}
+            <form method="POST" action="#"> {#  action="{{ url_for('tools.delete_task_duplicates') }}" #}
+                {% for key, tasks in duplicates.items() %}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <strong>ชื่องาน:</strong> {{ key[0] }} <br>
+                        <strong>ลูกค้า:</strong> {{ key[1] }} (พบ {{ tasks|length }} รายการ)
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        {% for task in tasks %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <input class="form-check-input me-2" type="checkbox" name="task_ids" value="{{ task.id }}" id="task_{{ task.id }}" {% if loop.first %}disabled{% endif %}>
+                                <label for="task_{{ task.id }}">
+                                    <a href="{{ url_for('main.task_details', task_id=task.id) }}" target="_blank">{{ task.title }}</a>
+                                    <small class="text-muted">(ID: {{ task.id }})</small><br>
+                                    <small>สร้างเมื่อ: {{ task.created_formatted }} | สถานะ: {{ task.status }}</small>
+                                </label>
+                            </div>
+                            {% if loop.first %}<span class="badge bg-success">รายการหลัก (เก็บไว้)</span>{% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> ลบรายการที่เลือก</button>
+            </form>
+        {% else %}
+            <div class="alert alert-success" role="alert">
+                <i class="bi bi-check-circle-fill"></i> ไม่พบข้อมูลงานที่ซ้ำซ้อนในระบบ
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Equipment Duplicates Tab -->
+    <div class="tab-pane fade p-3" id="nav-equipment" role="tabpanel" aria-labelledby="nav-equipment-tab">
+        <h4>รายการอุปกรณ์ที่อาจซ้ำซ้อน</h4>
+        <div class="alert alert-info">
+            ส่วนนี้ยังอยู่ในระหว่างการพัฒนา
+        </div>
+        {# Placeholder for equipment duplicates list #}
+    </div>
+</div>
+{% endblock %}

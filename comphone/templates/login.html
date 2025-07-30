@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}เข้าสู่ระบบ - Comphone{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+    <div class="card shadow-lg p-4" style="max-width: 400px; width: 100%;">
+        <div class="card-body text-center">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Comphone Logo" class="mb-4" style="max-width: 150px;">
+            <h3 class="card-title mb-3">ยินดีต้อนรับสู่ Comphone Integrated System</h3>
+            <p class="text-muted mb-4">เข้าสู่ระบบเพื่อจัดการงานและข้อมูลของคุณ</p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div id="flash-messages-area" class="mb-3">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {# ปุ่ม Login with Google ที่จะเรียก URL จาก main_routes.py #}
+            {# เนื่องจาก main.login() จะทำการ Redirect ไปยัง Google เอง หากยังไม่ได้ล็อกอิน #}
+            {# เราจึงสามารถทำให้ปุ่มนี้เป็นแค่ปุ่มที่กดแล้วไปที่ /login (ซึ่งจะ Redirect ต่อไป) #}
+            {# หรือใช้ JavaScript เพื่อ Redirect โดยตรงหากมี Authorization URL #}
+            <a class="btn btn-primary btn-lg w-100 mb-3 d-flex align-items-center justify-content-center"
+               href="{{ url_for('main.login') }}"> {# <--- แก้ไขตรงนี้ให้ปุ่มไปที่ main.login #}
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo" style="width: 24px; height: 24px; margin-right: 10px;">
+                ล็อกอินด้วย Google
+            </a>
+            <p class="text-muted small">โปรดใช้บัญชี Google ที่ได้รับอนุญาตเท่านั้น</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

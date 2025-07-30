@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}รายงานช่าง - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-person-lines-fill"></i> รายงานสรุปงานของช่าง</h1>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('tools.technician_report') }}" class="row g-3 align-items-center">
+            <div class="col-auto">
+                <label for="month" class="col-form-label">เลือกเดือน:</label>
+            </div>
+            <div class="col-auto">
+                <select name="month" id="month" class="form-select">
+                    {% for m in months %}
+                        <option value="{{ m.value }}" {% if m.value == selected_month %}selected{% endif %}>{{ m.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <label for="year" class="col-form-label">ปี:</label>
+            </div>
+            <div class="col-auto">
+                <select name="year" id="year" class="form-select">
+                    {% for y in years %}
+                        <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> แสดงรายงาน</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">ชื่อช่าง</th>
+                <th scope="col">จำนวนงานที่ทำเสร็จ</th>
+                <th scope="col">รายการงาน</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if report_data %}
+                {% for tech_name, data in report_data.items() %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ tech_name }}</td>
+                    <td><span class="badge bg-success rounded-pill">{{ data.count }}</span></td>
+                    <td>
+                        <ul class="list-unstyled mb-0">
+                            {% for task in data.tasks %}
+                                <li>
+                                    <a href="{{ url_for('main.task_details', task_id=task.id) }}" target="_blank" title="{{ task.title }}">{{ task.title | truncate(50) }}</a> 
+                                    <small class="text-muted">({{ task.completed_formatted }})</small>
+                                </li>
+                            {% else %}
+                                <li>-</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="4" class="text-center">ไม่พบข้อมูลสำหรับเดือนที่เลือก</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

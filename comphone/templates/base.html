@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ระบบจัดการงาน{% endblock %} - Comphone</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='custom.css') }}">
+
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        .navbar-logo {
+            height: 40px;
+            width: auto;
+            margin-right: 10px;
+        }
+        .bg-custom-black {
+            background-color: #000000 !important;
+        }
+        body {
+            background-color: #f8f9fa;
+            padding-top: 70px;
+        }
+        .card {
+            transition: all 0.2s ease-in-out;
+        }
+        .card-header h1, .card-header h2, .card-header h3, .card-header h4, .card-header h5, .card-header h6 {
+            margin-bottom: 0;
+            font-weight: 600;
+        }
+        .navbar-user-avatar {
+            width: 32px;
+            height: 32px;
+            margin-right: 8px;
+        }
+    </style>
+    {% block head_extra %}{% endblock %}
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-custom-black shadow-sm fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.summary') if session.get('credentials') else '#' }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="navbar-logo">
+                <span class="d-none d-sm-inline">Task Manager</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                {% if session.get('credentials') %}
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.summary' %}active{% endif %}" href="{{ url_for('main.summary') }}"><i class="fas fa-list-check me-1"></i>สรุปงาน</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.calendar_view' %}active{% endif %}" href="{{ url_for('main.calendar_view') }}"><i class="fas fa-calendar-alt me-1"></i>ปฏิทิน</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'tools.technician_report' %}active{% endif %}" href="{{ url_for('tools.technician_report') }}"><i class="fas fa-user-chart me-1"></i>รายงานช่าง</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'tools.settings_page' %}active{% endif %}" href="{{ url_for('tools.settings_page') }}"><i class="fas fa-cog me-1"></i>ตั้งค่า</a>
+                    </li>
+                </ul>
+                {% endif %}
+
+                <ul class="navbar-nav ms-auto align-items-center">
+                    {% if session.get('credentials') %}
+                        <li class="nav-item me-lg-2">
+                             <a class="btn btn-success" href="{{ url_for('main.form_page') }}">
+                                <i class="fas fa-plus-circle me-1"></i>สร้างงานใหม่
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarUserDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                {% if session.profile.picture %}
+                                    <img src="{{ session.profile.picture }}" alt="{{ session.profile.name }}" class="rounded-circle navbar-user-avatar">
+                                {% else %}
+                                     <i class="fas fa-user-circle fa-2x me-2"></i>
+                                {% endif %}
+                                <span class="d-none d-sm-inline">{{ session.profile.name }}</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarUserDropdown">
+                                <li><span class="dropdown-item-text"><small class="text-muted">{{ session.profile.email }}</small></span></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <!-- เพิ่มปุ่มเปิดการแจ้งเตือน -->
+                                <li><a class="dropdown-item" href="#" id="enable-notifications-btn"><i class="fas fa-bell me-2 text-info"></i>เปิดการแจ้งเตือน</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('main.logout') }}"><i class="fas fa-sign-out-alt me-2 text-danger"></i>ออกจากระบบ</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="btn btn-outline-light" href="{{ url_for('main.login') }}">
+                                <i class="fab fa-google me-2"></i>Login with Google
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mt-4 mb-5 pb-5">
+        <div id="flash-messages-area">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message | safe }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="text-center text-muted py-3 bg-white border-top fixed-bottom">
+        <small>Task Management System © {{ now.year }}</small>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    {% block body_extra %}{% endblock %}
+
+    <!-- เพิ่ม Script สำหรับ PWA และ Push Notification -->
+    {% if session.get('credentials') %}
+    <script>
+        const VAPID_PUBLIC_KEY = "{{ config.VAPID_PUBLIC_KEY }}";
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        async function enablePushNotifications() {
+            if (!('serviceWorker' in navigator && 'PushManager' in window)) {
+                Swal.fire('ไม่รองรับ', 'เบราว์เซอร์ของคุณไม่รองรับการแจ้งเตือน', 'error');
+                return;
+            }
+            
+            try {
+                const registration = await navigator.serviceWorker.register("{{ url_for('static', filename='service-worker.js') }}");
+                console.log('Service Worker registered:', registration);
+
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    Swal.fire('ไม่อนุญาต', 'คุณต้องอนุญาตเพื่อรับการแจ้งเตือน', 'warning');
+                    return;
+                }
+
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+                });
+                
+                console.log('Push subscription:', subscription);
+
+                const response = await fetch("{{ url_for('api.save_subscription') }}", {
+                    method: 'POST',
+                    body: JSON.stringify(subscription),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    }
+                });
+
+                if (response.ok) {
+                    console.log('Subscription sent to server.');
+                    Swal.fire('สำเร็จ!', 'เปิดการแจ้งเตือนเรียบร้อยแล้ว', 'success');
+                } else {
+                    throw new Error('Failed to send subscription to server.');
+                }
+
+            } catch (error) {
+                console.error('Failed to subscribe to push notifications:', error);
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเปิดการแจ้งเตือนได้', 'error');
+            }
+        }
+        
+        const enableBtn = document.getElementById('enable-notifications-btn');
+        if (enableBtn) {
+            enableBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                enablePushNotifications();
+            });
+        }
+    </script>
+    {% endif %}
+</body>
+</html>
